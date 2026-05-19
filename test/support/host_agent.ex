@@ -26,18 +26,25 @@ defmodule JidoWatch.Test.Support.HostAgent do
     subtitles = Keyword.get(opts, :subtitles)
     test_pid = Keyword.get(opts, :test_pid)
     angles = Keyword.get(opts, :angles, [:theme])
+    connection = Keyword.get(opts, :connection, :unconnected)
+    watermark = Keyword.get(opts, :watermark)
+
+    plugin_state =
+      %{
+        trakt: trakt,
+        subtitles: subtitles,
+        trakt_client_id: client_id,
+        trakt_client_secret: client_secret,
+        angles: angles,
+        connection: connection,
+        watermark: watermark
+      }
 
     AgentServer.start_link(
       agent: __MODULE__,
       register_global: false,
       initial_state: %{
-        __jido_watch__: %{
-          trakt: trakt,
-          subtitles: subtitles,
-          trakt_client_id: client_id,
-          trakt_client_secret: client_secret,
-          angles: angles
-        },
+        __jido_watch__: plugin_state,
         test_pid: test_pid
       }
     )
