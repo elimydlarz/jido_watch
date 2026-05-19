@@ -27,6 +27,7 @@ defmodule JidoWatch.MixProject do
         "test.use_case": :test,
         "test.adapter": :test,
         "test.system": :test,
+        "test.journey": :test,
         "test.stale": :test
       ]
     ]
