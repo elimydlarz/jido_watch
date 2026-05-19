@@ -79,17 +79,36 @@ defmodule Mix.Tasks.JidoWatch.LiveSetup do
 
     case call_setup(pid, %{code: code}) do
       {:ok, _url} ->
-        connected? = connected?(pid)
+        connection = connection(pid)
 
-        if connected? do
-          IO.puts("\n✓ Connected to Trakt.\n")
-        else
-          Mix.raise("Token exchange returned without an error but the agent is not connected.")
+        case connection do
+          {:connected, tokens} ->
+            IO.puts("\n✓ Connected to Trakt.\n")
+            print_token_block(tokens)
+
+          _ ->
+            Mix.raise("Token exchange returned without an error but the agent is not connected.")
         end
 
       {:error, reason} ->
         Mix.raise("Token exchange failed: #{inspect(reason)}")
     end
+  end
+
+  defp print_token_block(%{access_token: access, refresh_token: refresh, expires_in: expires_in}) do
+    expires_at =
+      DateTime.utc_now()
+      |> DateTime.add(expires_in, :second)
+      |> DateTime.to_iso8601()
+
+    IO.puts("""
+    Add these to your .env to enable the live journey test
+    (mix test.journey). They expire #{expires_at}; rerun this task before then.
+
+    TRAKT_ACCESS_TOKEN=#{access}
+    TRAKT_REFRESH_TOKEN=#{refresh}
+    TRAKT_TOKEN_EXPIRES_AT=#{expires_at}
+    """)
   end
 
   defp call_setup(pid, data) do
