@@ -1,11 +1,13 @@
 # Test Trees
 
-## Functional
+## System
+
+Trees here describe top-level, user-facing behaviour. Tests run against a real `Jido.AgentServer` with `JidoWatch.Plugin` mounted on a fixture host agent that implements `@behaviour JidoWatch` with canned callback bodies. Only the LLM (which would otherwise be called inside the host agent's callbacks) and the external infrastructure (Trakt API, subtitle source) are stubbed via in-memory twins — the plugin code path and the Jido runtime are real.
 
 ### watching
 
 ```
-watching (functional: test/functional/watching_test.exs)
+watching (system: test/system/watching_test.exs)
   when the user watches new content
     then the agent's watch/2 is called once per chunk
     then the agent's experience/3 is called once per angle, with the experiences from watch
@@ -19,7 +21,7 @@ watching (functional: test/functional/watching_test.exs)
 ### setup
 
 ```
-setup (functional: test/functional/setup_test.exs)
+setup (system: test/system/setup_test.exs)
   when the agent calls the setup_jido_watch action for an unconnected user
     then an authorization URL is returned
   when called with a valid auth code for that user
@@ -28,4 +30,128 @@ setup (functional: test/functional/setup_test.exs)
     then the user does not become connected
   when a user is not connected
     then no watching happens for them
+```
+
+## Use-case
+
+Trees here describe the watching pipeline orchestration in isolation. Tests
+call the pipeline module directly with in-memory Trakt and subtitle adapters,
+and a recording host fixture that implements `@behaviour JidoWatch`. No
+`Jido.AgentServer`, no signal routing — just the orchestration logic.
+
+### Watching
+
+```
+Watching (use_case: test/use_case/watching_test.exs)
+  run/1
+    when there are new watch entries with fetchable subtitles
+      then watch/2 is called once per chunk in window order
+```
+
+Error variants (no new entries, unfetchable subtitles) are covered by the
+`watching` system tree rather than re-asserted here; their value is at the
+seam where the action meets the agent runtime, not in the pure pipeline.
+
+### Setup
+
+```
+Setup (use_case: test/use_case/setup_test.exs)
+  run/2
+    when called with no code
+      then last_setup_url is set to a Trakt authorize URL carrying the client_id and redirect_uri
+      then connection stays :unconnected
+    when called with a valid code
+      then connection becomes {:connected, tokens} from Trakt
+      then last_setup_error is cleared
+    if Trakt rejects the code
+      then connection stays :unconnected
+      then last_setup_error is set to the reason Trakt returned
+```
+
+## Domain
+
+Trees here describe pure functions over the domain types — chunking cues into
+attention windows. No collaborators, no I/O.
+
+### Chunker
+
+```
+Chunker (domain: test/domain/chunker_test.exs)
+  chunk_for_watch/2
+    then a cue is placed in the chunk whose 10-minute window contains its start_ms
+    then cues falling in the same window appear in the same chunk
+    then chunks are returned in window order
+    then each chunk's index reflects its window number from zero
+    then windows containing no cues do not appear in the output
+    then each chunk carries the source watch entry
+    when given no cues
+      then no chunks are returned
+```
+
+### Srt
+
+```
+Srt (domain: test/domain/srt_test.exs)
+  parse/1
+    then each block becomes a Cue with start_ms and end_ms parsed from the timestamp line
+    then multi-line cue text is joined with newlines
+    then blocks separated by extra blank lines parse the same as single-blank-separated
+    when given an empty string
+      then no cues are returned
+    if a block has a malformed timestamp line
+      then the error wraps the offending block index
+```
+
+## Adapter
+
+Trees here describe the real driven adapters that talk to external infrastructure.
+Tests run against the real adapter module with HTTP responses provided by
+`Req.Test`'s plug stub — the request shape and response mapping are real; the
+network is not. The same module is also exercised end-to-end against the live
+Trakt API by the `mix jido_watch.live_setup` task, which keeps the human
+authorization step in the loop.
+
+### Subtitle.OpenSubtitles
+
+```
+Subtitle.OpenSubtitles (adapter: test/adapter/subtitle_open_subtitles_test.exs)
+  fetch/2
+    when the watch entry is a movie with an imdb_id
+      then it searches OpenSubtitles by imdb_id with the Api-Key and User-Agent headers
+      then it returns the parsed cues from the SRT linked via /download
+    when the watch entry is an episode with an imdb_id
+      then it searches by the episode's imdb_id
+    when the handle carries a bearer_token
+      then /download is sent with Authorization: Bearer <token>
+    if the search returns no subtitles
+      then the error is :no_subtitles
+    if /subtitles responds non-200
+      then the error wraps the status and body
+    if /download responds non-200
+      then the error wraps the status and body
+    if the SRT URL responds non-200
+      then the error wraps the status and body
+  login/3
+    when given valid credentials
+      then it POSTs username and password to /login and returns the bearer token from the response
+    if /login responds non-200
+      then the error wraps the status and body
+```
+
+### Trakt.HTTP
+
+```
+Trakt.HTTP (adapter: test/adapter/trakt_http_test.exs)
+  exchange_code/2
+    when given a valid auth code
+      then it POSTs the code with client credentials and grant_type to /oauth/token
+        and returns the parsed access_token, refresh_token and expires_in
+    if Trakt responds with a non-200 status
+      then the error wraps the status and body
+  recent_watches/2
+    when given a valid access token
+      then it GETs /sync/history with bearer auth, trakt-api-version and trakt-api-key headers
+        and returns the parsed list of entries
+    if Trakt responds with a non-200 status
+      then the error wraps the status and body
 ```

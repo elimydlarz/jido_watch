@@ -42,6 +42,7 @@ defmodule JidoWatch.MixProject do
       {:req, "~> 0.5"},
       {:junit_formatter, "~> 3.3", only: :test},
       {:stream_data, "~> 1.0", only: :test},
+      {:plug, "~> 1.16", only: :test},
       {:ex_doc, "~> 0.34", only: :dev, runtime: false}
     ]
   end

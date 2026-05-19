@@ -29,9 +29,9 @@ Small and bidirectional.
 
 **Agent supplies three callbacks the plugin invokes during the watching pipeline.** All inference happens here.
 
-- `watch(pid, %Chunk{}) :: {:ok, %Experience{}}` — turn one transcript chunk into an experience. The agent is free to search its memory, call its LLM with whatever prompt, build the experience in whatever shape — as long as it returns one.
-- `experience(pid, [%Experience{}], angle) :: {:ok, %Impression{}}` — read all the accumulated experiences through a single angle's lens to form an impression.
-- `form_opinion(pid, [%Impression{}]) :: :ok` — integrate the per-angle impressions, compose a message in the agent's own voice, deliver it however the agent normally delivers messages. **Terminal.** No `on_opinion` afterwards; the agent owns delivery here.
+- `watch(%Jido.Agent{}, %Chunk{}) :: {:ok, %Experience{}}` — turn one transcript chunk into an experience. The agent struct gives the callback access to its own `state` (LLM client, memory backend, voice config) without resolving its server pid; the agent is free to search its memory, call its LLM with whatever prompt, build the experience in whatever shape — as long as it returns one.
+- `experience(%Jido.Agent{}, [%Experience{}], angle) :: {:ok, %Impression{}}` — read all the accumulated experiences through a single angle's lens to form an impression.
+- `form_opinion(%Jido.Agent{}, [%Impression{}]) :: :ok` — integrate the per-angle impressions, compose a message in the agent's own voice, deliver it however the agent normally delivers messages. **Terminal.** No `on_opinion` afterwards; the agent owns delivery here.
 
 **Plugin exposes one LLM-callable action the agent uses to drive setup.**
 
@@ -86,7 +86,7 @@ Four layers, named for the hex seam under test, not for infrastructure presence:
 | Domain | Pure domain structs and functions (chunk, experience, impression, opinion). No collaborators. | `test/domain/` | `@moduletag :domain` |
 | Use-case | The watching pipeline orchestration, exercised against a fixture host agent that implements the three callbacks with canned data. The OAuth state machine. | `test/use_case/` | `@moduletag :use_case` |
 | Adapter | The Trakt HTTP adapter against its port contract; the subtitle fetcher adapter. Driving: mock the use-case. Driven: real HTTP (recorded/replayed). | `test/adapter/` | `@moduletag :adapter` |
-| System | End-to-end through the `Jido.AgentServer` runtime with an in-memory Trakt adapter by default. | `test/system/` | `@moduletag :system` |
+| System | Real `Jido.AgentServer` running a fixture host agent that mounts the real `JidoWatch.Plugin` and implements `@behaviour JidoWatch` with canned callback bodies. Only the LLM (inside callbacks) and external infrastructure (Trakt, subtitles) are stubbed via in-memory twins. The plugin code path and the Jido runtime are real — total-confidence end-to-end. | `test/system/` | `@moduletag :system` |
 
 Every test module declares the moduletag matching its directory. The per-layer mix aliases use `--only <tag>` for filtering (works correctly on empty suites; directory paths don't).
 

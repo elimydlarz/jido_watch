@@ -1,10 +1,29 @@
+# Build + deps
 /_build/
 /cover/
 /deps/
 /doc/
 /.fetch
-erl_crash.dump
 *.ez
+*.beam
 jido_watch-*.tar
+erl_crash.dump
+
+# Runtime
 /tmp/
+
+# Editor / tooling
 .elixir_ls/
+.vscode/
+.idea/
+
+# Secrets — keep .env.example tracked, ignore everything else
+.env
+.env.*
+!.env.example
+
+# Claude Code workspace
+.claude/
+
+# macOS
+.DS_Store
