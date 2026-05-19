@@ -86,7 +86,7 @@ Four layers, named for the hex seam under test, not for infrastructure presence:
 | Domain | Pure domain structs and functions (chunk, experience, impression, opinion). No collaborators. | `test/domain/` | `@moduletag :domain` |
 | Use-case | The watching pipeline orchestration, exercised against a fixture host agent that implements the three callbacks with canned data. The OAuth state machine. | `test/use_case/` | `@moduletag :use_case` |
 | Adapter | The Trakt HTTP adapter against its port contract; the subtitle fetcher adapter. Driving: mock the use-case. Driven: real HTTP (recorded/replayed). | `test/adapter/` | `@moduletag :adapter` |
-| System | Real `Jido.AgentServer` running a fixture host agent that mounts the real `JidoWatch.Plugin` and implements `@behaviour JidoWatch` with canned callback bodies. Only the LLM (inside callbacks) and external infrastructure (Trakt, subtitles) are stubbed via in-memory twins. The plugin code path and the Jido runtime are real — total-confidence end-to-end. | `test/system/` | `@moduletag :system` |
+| System | Real `Jido.AgentServer` running a fixture host agent that mounts the real `JidoWatch.Plugin` and implements `@behaviour JidoWatch` with canned callback bodies. The plugin code path and the Jido runtime are always real. **Driven adapters in two modes:** in-memory twins by default (`mix test.system`), real Trakt + real OpenSubtitles for the functional-realism journey (`mix test.journey`, opt-in via `.env`). | `test/system/` | `@moduletag :system` (default), `@moduletag :journey` (functional) |
 
 Every test module declares the moduletag matching its directory. The per-layer mix aliases use `--only <tag>` for filtering (works correctly on empty suites; directory paths don't).
 
