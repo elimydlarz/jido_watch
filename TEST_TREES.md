@@ -16,6 +16,26 @@ watching (system: test/system/watching_test.exs)
     then no callbacks are called
   when content the user watched cannot be processed
     then form_opinion/2 is not called
+  when the same entry appears in a subsequent poll
+    then the agent's callbacks are not invoked again for it
+```
+
+### journey
+
+The functional-realism System test: the same `JidoWatch.Plugin` driven by the
+same `Jido.AgentServer` signal API as the hermetic system tests, wired to the
+real `Trakt.HTTP` and `Subtitle.OpenSubtitles` adapters. Excluded from the
+default test run; opt in via `mix test.journey` once `.env` carries Trakt
+tokens (run `mix jido_watch.live_setup` first) and OpenSubtitles credentials.
+
+```
+journey (system: test/system/journey_test.exs)
+  when a connected user polls Trakt and the most recent entry has retrievable subtitles
+    then the agent's watch/2 is invoked
+    then experience/3 is invoked once per configured angle
+    then form_opinion/2 is invoked once
+    when the user polls again
+      then no callbacks fire for the entry already processed
 ```
 
 ### setup
@@ -26,6 +46,7 @@ setup (system: test/system/setup_test.exs)
     then an authorization URL is returned
   when called with a valid auth code for that user
     then the user becomes connected
+    then subsequent polling only processes watches recorded after this moment
   when called with an invalid code
     then the user does not become connected
   when a user is not connected
@@ -46,6 +67,9 @@ Watching (use_case: test/use_case/watching_test.exs)
   run/1
     when there are new watch entries with fetchable subtitles
       then watch/2 is called once per chunk in window order
+    when an entry's watched_at is no later than the watermark
+      then it is skipped
+    then the returned watermark is the maximum of the input watermark and every attempted entry's watched_at
 ```
 
 Error variants (no new entries, unfetchable subtitles) are covered by the
@@ -63,6 +87,7 @@ Setup (use_case: test/use_case/setup_test.exs)
     when called with a valid code
       then connection becomes {:connected, tokens} from Trakt
       then last_setup_error is cleared
+      then the watermark is set to a DateTime no earlier than the moment of exchange
     if Trakt rejects the code
       then connection stays :unconnected
       then last_setup_error is set to the reason Trakt returned
