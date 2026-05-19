@@ -28,6 +28,7 @@ defmodule JidoWatch.Actions.SetupJidoWatch do
         new_state =
           plugin_state
           |> Map.put(:connection, {:connected, tokens})
+          |> Map.put(:watermark, DateTime.utc_now())
           |> Map.put(:last_setup_error, nil)
 
         {:ok, %{__jido_watch__: new_state}}

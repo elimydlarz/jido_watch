@@ -30,6 +30,7 @@ defmodule JidoWatch.Plugin do
       redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
       angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads],
       connection: :unconnected,
+      watermark: nil,
       last_setup_url: nil,
       last_setup_error: nil
     }

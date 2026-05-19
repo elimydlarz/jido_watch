@@ -29,7 +29,7 @@ defmodule JidoWatch.UseCase.WatchingTest do
 
       agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
 
-      :ok =
+      {:ok, _} =
         Watching.run(%{
           trakt: trakt,
           subtitles: subtitles,
@@ -43,6 +43,101 @@ defmodule JidoWatch.UseCase.WatchingTest do
       assert_receive {:watch_called, %{index: 1}}
       assert_receive {:watch_called, %{index: 2}}
       refute_receive {:watch_called, _}, 50
+    end
+  end
+
+  describe "run/1 when an entry's watched_at is no later than the watermark" do
+    test "then it is skipped" do
+      watermark = ~U[2025-06-01 12:00:00Z]
+
+      old_entry = %{
+        "id" => "old",
+        "type" => "movie",
+        "watched_at" => "2025-06-01T11:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      same_moment_entry = %{
+        "id" => "same",
+        "type" => "movie",
+        "watched_at" => "2025-06-01T12:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt1"}}
+      }
+
+      trakt = TraktInMemory.start!(watches: [old_entry, same_moment_entry])
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{
+            "old" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}],
+            "same" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]
+          }
+        )
+
+      agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
+
+      Watching.run(%{
+        trakt: trakt,
+        subtitles: subtitles,
+        access_token: "tok",
+        host: RecordingHost,
+        agent: agent,
+        angles: [:theme],
+        watermark: watermark
+      })
+
+      refute_receive {:watch_called, _}, 50
+    end
+  end
+
+  describe "run/1" do
+    test "then the returned watermark is the maximum of the input watermark and every attempted entry's watched_at" do
+      watermark = ~U[2025-06-01 12:00:00Z]
+
+      old_entry = %{
+        "id" => "old",
+        "type" => "movie",
+        "watched_at" => "2025-05-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      newer_entry = %{
+        "id" => "newer",
+        "type" => "movie",
+        "watched_at" => "2025-07-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt1"}}
+      }
+
+      newest_entry = %{
+        "id" => "newest",
+        "type" => "movie",
+        "watched_at" => "2025-08-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt2"}}
+      }
+
+      trakt = TraktInMemory.start!(watches: [old_entry, newer_entry, newest_entry])
+
+      cue = %Cue{start_ms: 0, end_ms: 1_000, text: "x"}
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{"old" => [cue], "newer" => [cue], "newest" => [cue]}
+        )
+
+      agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
+
+      assert {:ok, new_watermark} =
+               Watching.run(%{
+                 trakt: trakt,
+                 subtitles: subtitles,
+                 access_token: "tok",
+                 host: RecordingHost,
+                 agent: agent,
+                 angles: [:theme],
+                 watermark: watermark
+               })
+
+      assert new_watermark == ~U[2025-08-01 00:00:00Z]
     end
   end
 end

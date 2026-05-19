@@ -37,6 +37,40 @@ defmodule JidoWatch.System.SetupTest do
       assert :ok = HostAgent.complete_setup(pid, "good-code")
       assert HostAgent.connected?(pid)
     end
+
+    test "then subsequent polling only processes watches recorded after this moment" do
+      tokens = %{access_token: "tok-abc", refresh_token: "ref-abc", expires_in: 7_776_000}
+
+      old_entry = %{
+        "id" => "old",
+        "type" => "movie",
+        "watched_at" => "2020-01-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      trakt =
+        TraktInMemory.start!(codes: %{"good-code" => tokens}, watches: [old_entry])
+
+      subtitles =
+        JidoWatch.Test.Support.SubtitleInMemory.start!(
+          cues: %{"old" => [%JidoWatch.Subtitle.Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
+        )
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client-abc",
+          trakt_client_secret: "secret-abc",
+          test_pid: self()
+        )
+
+      :ok = HostAgent.complete_setup(pid, "good-code")
+      :ok = HostAgent.poll(pid)
+
+      refute_receive {:watch_called, _}, 200
+      refute_receive {:form_opinion_called, _}, 50
+    end
   end
 
   describe "when called with an invalid code" do

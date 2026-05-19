@@ -15,7 +15,7 @@ defmodule JidoWatch.Watching do
   alias Jido.Agent
   alias JidoWatch.Chunker
 
-  @spec run(map()) :: :ok | {:error, term()}
+  @spec run(map()) :: {:ok, DateTime.t() | nil} | {:error, term()}
   def run(%{
         trakt: {trakt_mod, trakt_handle},
         subtitles: {sub_mod, sub_handle},
@@ -23,11 +23,52 @@ defmodule JidoWatch.Watching do
         host: host,
         agent: %Agent{} = agent,
         angles: angles
-      }) do
+      } = opts) do
+    watermark = Map.get(opts, :watermark)
     {:ok, entries} = trakt_mod.recent_watches(trakt_handle, access_token)
-    Enum.each(entries, &run_for_entry(&1, sub_mod, sub_handle, host, agent, angles))
-    :ok
+
+    attempted = Enum.filter(entries, &past_watermark?(&1, watermark))
+    Enum.each(attempted, &run_for_entry(&1, sub_mod, sub_handle, host, agent, angles))
+
+    {:ok, advance_watermark(watermark, attempted)}
   end
+
+  defp advance_watermark(watermark, attempted) do
+    Enum.reduce(attempted, watermark, fn entry, acc ->
+      case watched_at(entry) do
+        nil -> acc
+        %DateTime{} = at -> max_dt(acc, at)
+      end
+    end)
+  end
+
+  defp max_dt(nil, b), do: b
+  defp max_dt(a, nil), do: a
+
+  defp max_dt(a, b) do
+    case DateTime.compare(a, b) do
+      :lt -> b
+      _ -> a
+    end
+  end
+
+  defp past_watermark?(_entry, nil), do: true
+
+  defp past_watermark?(entry, watermark) do
+    case watched_at(entry) do
+      nil -> true
+      %DateTime{} = at -> DateTime.compare(at, watermark) == :gt
+    end
+  end
+
+  defp watched_at(%{"watched_at" => binary}) when is_binary(binary) do
+    case DateTime.from_iso8601(binary) do
+      {:ok, dt, _offset} -> dt
+      _ -> nil
+    end
+  end
+
+  defp watched_at(_), do: nil
 
   defp run_for_entry(entry, sub_mod, sub_handle, host, agent, angles) do
     with {:ok, cues} <- sub_mod.fetch(sub_handle, entry),

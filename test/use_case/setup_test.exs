@@ -77,6 +77,20 @@ defmodule JidoWatch.UseCase.SetupTest do
 
       assert new_state.last_setup_error == nil
     end
+
+    test "then the watermark is set to a DateTime no earlier than the moment of exchange" do
+      tokens = %{access_token: "tok-1", refresh_token: "ref-1", expires_in: 7_776_000}
+      trakt = TraktInMemory.start!(codes: %{"good-code" => tokens})
+      agent = agent_with(base_plugin_state(trakt))
+
+      before = DateTime.utc_now()
+
+      {:ok, %{__jido_watch__: new_state}} =
+        SetupJidoWatch.run(%{code: "good-code"}, %{agent: agent})
+
+      assert %DateTime{} = new_state.watermark
+      assert DateTime.compare(new_state.watermark, before) in [:gt, :eq]
+    end
   end
 
   describe "run/2 if Trakt rejects the code" do

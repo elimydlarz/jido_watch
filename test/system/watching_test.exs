@@ -172,4 +172,49 @@ defmodule JidoWatch.System.WatchingTest do
       refute_receive {:form_opinion_called, _}, 300
     end
   end
+
+  describe "when the same entry appears in a subsequent poll" do
+    test "then the agent's callbacks are not invoked again for it" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+
+      future_watched_at =
+        DateTime.utc_now() |> DateTime.add(60, :second) |> DateTime.to_iso8601()
+
+      entry = %{
+        "id" => "ep-1",
+        "type" => "movie",
+        "watched_at" => future_watched_at,
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      trakt = TraktInMemory.start!(codes: %{"code" => tokens}, watches: [entry])
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
+        )
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self()
+        )
+
+      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.poll(pid)
+
+      assert_receive {:watch_called, _}, 1_000
+      assert_receive {:experience_called, _, _}, 1_000
+      assert_receive {:form_opinion_called, _}, 1_000
+
+      :ok = HostAgent.poll(pid)
+
+      refute_receive {:watch_called, _}, 200
+      refute_receive {:experience_called, _, _}, 50
+      refute_receive {:form_opinion_called, _}, 50
+    end
+  end
 end
