@@ -93,11 +93,12 @@ Every test module declares the moduletag matching its directory. The per-layer m
 Commands:
 
 ```bash
-mix test                # all layers
+mix test                # all layers, journey excluded
 mix test.domain         # test/domain only
 mix test.use_case       # test/use_case only
 mix test.adapter        # test/adapter only
-mix test.system         # test/system only
+mix test.system         # test/system only (hermetic)
+mix test.journey        # functional journey vs real Trakt + OpenSubtitles
 mix test.stale          # only tests affected by recent changes
 mix test --failed       # re-run previously failed tests
 ```
