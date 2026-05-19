@@ -1,3 +1,5 @@
+JidoWatch.Test.Support.Dotenv.load()
+
 formatters =
   [ExUnit.CLIFormatter] ++
     if System.get_env("CI"), do: [JUnitFormatter], else: []
