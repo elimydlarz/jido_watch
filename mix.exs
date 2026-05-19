@@ -57,6 +57,7 @@ defmodule JidoWatch.MixProject do
       "test.use_case": ["test --only use_case"],
       "test.adapter": ["test --only adapter"],
       "test.system": ["test --only system"],
+      "test.journey": ["test --only journey"],
       "test.stale": ["test --stale"]
     ]
   end
