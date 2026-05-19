@@ -128,9 +128,9 @@ defmodule Mix.Tasks.JidoWatch.LiveSetup do
     end
   end
 
-  defp connected?(pid) do
+  defp connection(pid) do
     {:ok, state} = AgentServer.state(pid)
-    match?({:connected, _}, state.agent.state[:__jido_watch__].connection)
+    state.agent.state[:__jido_watch__].connection
   end
 
   defp fetch_env!(name) do
