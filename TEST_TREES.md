@@ -58,11 +58,11 @@ operator_setup (mix_task: lib/mix/tasks/jido_watch.operator_setup.ex)
     then the task halts with a message naming the missing variable
 ```
 
-### setup
+### user_setup
 
 ```
-setup (system: test/system/setup_test.exs)
-  when the agent calls the setup_jido_watch action for an unconnected user
+user_setup (system: test/system/user_setup_test.exs)
+  when the agent calls the user_setup action for an unconnected user
     then an authorization URL is returned
   when called with a valid auth code for that user
     then the user becomes connected
