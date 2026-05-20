@@ -21,6 +21,7 @@ defmodule JidoWatch.Poller do
   @impl GenServer
   def init(opts) do
     agent_pid = Keyword.fetch!(opts, :agent_pid)
+    Process.monitor(agent_pid)
     send(self(), :schedule_first)
     {:ok, %{agent_pid: agent_pid, interval_ms: nil}}
   end
@@ -39,6 +40,10 @@ defmodule JidoWatch.Poller do
 
     Process.send_after(self(), :tick, state.interval_ms)
     {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, agent_pid, _reason}, %{agent_pid: agent_pid} = state) do
+    {:stop, :normal, state}
   end
 
   defp read_interval_ms(agent_pid) do
