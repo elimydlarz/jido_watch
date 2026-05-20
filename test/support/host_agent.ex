@@ -109,8 +109,8 @@ defmodule JidoWatch.Test.Support.HostAgent do
     end
   end
 
-  defp call_setup(pid, data) do
-    signal = Signal.new!(%{type: "jido_watch.setup_jido_watch", data: data})
+  defp call_user_setup(pid, data) do
+    signal = Signal.new!(%{type: "jido_watch.user_setup", data: data})
     AgentServer.call(pid, signal)
   end
 end
