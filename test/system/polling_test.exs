@@ -146,4 +146,40 @@ defmodule JidoWatch.System.PollingTest do
              "expected ~3 polls at #{interval_ms}ms interval over #{3 * interval_ms + 300}ms, got #{calls}"
     end
   end
+
+  describe "when the agent terminates" do
+    test "then polling stops" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+      trakt = TraktInMemory.start!(codes: %{}, watches: [])
+      subtitles = SubtitleInMemory.start!(cues: %{})
+
+      interval_minutes = 0.02
+      interval_ms = round(interval_minutes * 60_000)
+
+      Process.flag(:trap_exit, true)
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: interval_minutes,
+          connection: {:connected, tokens}
+        )
+
+      Process.sleep(2 * interval_ms)
+      calls_while_alive = TraktInMemory.recent_watches_calls(trakt)
+      assert calls_while_alive >= 1
+
+      GenServer.stop(pid, :normal)
+      refute Process.alive?(pid)
+
+      Process.sleep(3 * interval_ms)
+      calls_after_termination = TraktInMemory.recent_watches_calls(trakt)
+
+      assert calls_after_termination == calls_while_alive
+    end
+  end
 end
