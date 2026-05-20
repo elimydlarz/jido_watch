@@ -3,8 +3,6 @@ defmodule JidoWatch.System.JourneyTest do
 
   @moduletag :journey
 
-  alias Jido.AgentServer
-  alias Jido.Signal
   alias JidoWatch.Subtitle.OpenSubtitles
   alias JidoWatch.Test.Support.HostAgent
   alias JidoWatch.Trakt.HTTP
@@ -31,7 +29,7 @@ defmodule JidoWatch.System.JourneyTest do
   end
 
   describe "when the user requests Trakt authorization through user_setup" do
-    test "the whole runtime lifecycle: OS login at startup, user_setup, polling, callbacks, re-poll idempotency" do
+    test "the whole runtime lifecycle: OS login at startup, user_setup, polling new content, callbacks, re-poll idempotency" do
       trakt_handle =
         HTTP.new(
           client_id: env!("TRAKT_CLIENT_ID"),
@@ -72,26 +70,25 @@ defmodule JidoWatch.System.JourneyTest do
 
       IO.puts("""
 
-      Open this URL in your browser, authorize on Trakt, then paste the code below.
+      Step 1 — Open this URL in your browser, authorize on Trakt, paste the code back below:
 
         #{url}
       """)
 
       code = "Trakt code: " |> IO.gets() |> to_string() |> String.trim()
-
-      if code == "" do
-        flunk("No code entered; aborting journey.")
-      end
+      assert code != "", "No code entered; aborting journey."
 
       :ok = HostAgent.complete_user_setup(pid, code)
       assert HostAgent.connected?(pid)
 
-      {:ok, entries} = HTTP.recent_watches(trakt_handle, current_access_token(pid))
+      IO.puts("""
 
-      assert entries != [],
-             "No recent Trakt watches found. Watch something on Trakt before running this."
+      Step 2 — Mark a movie or episode as watched on Trakt right now
+      (e.g. https://trakt.tv/movies — pick something popular with subtitles
+      on OpenSubtitles). Then press enter to continue.
+      """)
 
-      watermark_for_isolation(pid, entries)
+      _ = IO.gets("Press enter when watched: ")
 
       :ok = HostAgent.poll(pid)
 
@@ -117,27 +114,6 @@ defmodule JidoWatch.System.JourneyTest do
       nil -> raise "#{name} not set"
       "" -> raise "#{name} empty"
       value -> value
-    end
-  end
-
-  defp current_access_token(pid) do
-    {:ok, state} = AgentServer.state(pid)
-    {:connected, %{access_token: token}} = state.agent.state[:__jido_watch__].connection
-    token
-  end
-
-  defp watermark_for_isolation(pid, entries) do
-    case entries do
-      [_first, second | _] ->
-        {:ok, dt, _} = DateTime.from_iso8601(second["watched_at"])
-        signal = Signal.new!(%{type: "jido_watch.set_watermark", data: %{watermark: dt}})
-
-        case AgentServer.call(pid, signal) do
-          _ -> :ok
-        end
-
-      _ ->
-        :ok
     end
   end
 
