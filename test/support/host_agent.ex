@@ -129,4 +129,7 @@ defmodule JidoWatch.Test.Support.HostAgent do
     signal = Signal.new!(%{type: "jido_watch.user_setup", data: data})
     AgentServer.call(pid, signal)
   end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 end
