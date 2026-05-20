@@ -49,6 +49,11 @@ defmodule JidoWatch.System.JourneyTest do
           env!("OPENSUBTITLES_PASSWORD")
         )
 
+      IO.puts("""
+
+      OpenSubtitles login OK — bearer #{redact(bearer)}
+      """)
+
       os_authed =
         OpenSubtitles.new(
           api_key: env!("OPENSUBTITLES_API_KEY"),
