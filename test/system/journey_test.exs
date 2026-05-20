@@ -201,12 +201,4 @@ defmodule JidoWatch.System.JourneyTest do
     end
   end
 
-  defp drain(tag) do
-    receive do
-      {^tag, _} -> drain(tag)
-      {^tag, _, _} -> drain(tag)
-    after
-      0 -> :ok
-    end
-  end
 end
