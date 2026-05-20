@@ -56,16 +56,6 @@ journey (system: test/system/journey_test.exs)
               then no callbacks fire
 ```
 
-### operator_setup
-
-```
-operator_setup (mix_task: lib/mix/tasks/jido_watch.operator_setup.ex)
-  when the task runs with OpenSubtitles credentials in .env
-    then a bearer token is fetched from OpenSubtitles and written into .env as OPENSUBTITLES_BEARER_TOKEN
-  if any required credential is missing from .env
-    then the task halts with a message naming the missing variable
-```
-
 ### user_setup
 
 ```
