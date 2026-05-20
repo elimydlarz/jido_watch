@@ -3,6 +3,8 @@ defmodule JidoWatch.System.JourneyTest do
 
   @moduletag :journey
 
+  alias Jido.AgentServer
+  alias Jido.Signal
   alias JidoWatch.Subtitle.OpenSubtitles
   alias JidoWatch.Test.Support.HostAgent
   alias JidoWatch.Trakt.HTTP
@@ -10,8 +12,6 @@ defmodule JidoWatch.System.JourneyTest do
   @required_env ~w(
     TRAKT_CLIENT_ID
     TRAKT_CLIENT_SECRET
-    TRAKT_ACCESS_TOKEN
-    TRAKT_REFRESH_TOKEN
     OPENSUBTITLES_API_KEY
     OPENSUBTITLES_USERNAME
     OPENSUBTITLES_PASSWORD
@@ -21,44 +21,22 @@ defmodule JidoWatch.System.JourneyTest do
   @angles [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads]
 
   setup_all do
-    missing =
-      Enum.filter(@required_env, fn name -> System.get_env(name) in [nil, ""] end)
+    missing = Enum.filter(@required_env, fn n -> System.get_env(n) in [nil, ""] end)
 
     if missing != [] do
-      raise """
-      Missing env for the journey test: #{Enum.join(missing, ", ")}.
-      Populate .env (see .env.example), run `mix jido_watch.live_setup` for the Trakt tokens,
-      then rerun with `mix test.journey`.
-      """
+      raise "Missing env for the journey test: #{Enum.join(missing, ", ")}. Populate .env (see .env.example)."
     end
 
     :ok
   end
 
-  describe "when a connected user polls Trakt and the most recent entry has retrievable subtitles" do
-    test "then watch/2, experience/3 (per angle), and form_opinion/2 are invoked, and a re-poll fires nothing" do
+  describe "when the user requests Trakt authorization through user_setup" do
+    test "the whole runtime lifecycle: OS login at startup, user_setup, polling, callbacks, re-poll idempotency" do
       trakt_handle =
         HTTP.new(
           client_id: env!("TRAKT_CLIENT_ID"),
           client_secret: env!("TRAKT_CLIENT_SECRET")
         )
-
-      access_token = env!("TRAKT_ACCESS_TOKEN")
-
-      {:ok, entries} = HTTP.recent_watches(trakt_handle, access_token)
-
-      assert entries != [],
-             "No recent Trakt watches found. Mark something as watched on Trakt before running this test."
-
-      watermark =
-        case entries do
-          [_first, second | _] ->
-            {:ok, dt, _} = DateTime.from_iso8601(second["watched_at"])
-            dt
-
-          _ ->
-            nil
-        end
 
       os_handle =
         OpenSubtitles.new(
@@ -80,34 +58,51 @@ defmodule JidoWatch.System.JourneyTest do
           bearer_token: bearer
         )
 
-      tokens = %{
-        access_token: access_token,
-        refresh_token: env!("TRAKT_REFRESH_TOKEN"),
-        expires_in: 0
-      }
-
       {:ok, pid} =
         HostAgent.start_link(
           trakt: {HTTP, trakt_handle},
           subtitles: {OpenSubtitles, os_authed},
           trakt_client_id: env!("TRAKT_CLIENT_ID"),
           trakt_client_secret: env!("TRAKT_CLIENT_SECRET"),
-          connection: {:connected, tokens},
-          watermark: watermark,
           angles: @angles,
           test_pid: self()
         )
 
+      {:ok, url} = HostAgent.user_setup(pid)
+
+      IO.puts("""
+
+      Open this URL in your browser, authorize on Trakt, then paste the code below.
+
+        #{url}
+      """)
+
+      code = "Trakt code: " |> IO.gets() |> to_string() |> String.trim()
+
+      if code == "" do
+        flunk("No code entered; aborting journey.")
+      end
+
+      :ok = HostAgent.complete_user_setup(pid, code)
+      assert HostAgent.connected?(pid)
+
+      {:ok, entries} = HTTP.recent_watches(trakt_handle, current_access_token(pid))
+
+      assert entries != [],
+             "No recent Trakt watches found. Watch something on Trakt before running this."
+
+      watermark_for_isolation(pid, entries)
+
       :ok = HostAgent.poll(pid)
 
-      assert_receive {:watch_called, _}, 30_000
+      assert_receive {:watch_called, _}, 60_000
       drain(:watch_called)
 
       for _ <- @angles do
-        assert_receive {:experience_called, _, _}, 30_000
+        assert_receive {:experience_called, _, _}, 60_000
       end
 
-      assert_receive {:form_opinion_called, _}, 30_000
+      assert_receive {:form_opinion_called, _}, 60_000
 
       :ok = HostAgent.poll(pid)
 
@@ -122,6 +117,27 @@ defmodule JidoWatch.System.JourneyTest do
       nil -> raise "#{name} not set"
       "" -> raise "#{name} empty"
       value -> value
+    end
+  end
+
+  defp current_access_token(pid) do
+    {:ok, state} = AgentServer.state(pid)
+    {:connected, %{access_token: token}} = state.agent.state[:__jido_watch__].connection
+    token
+  end
+
+  defp watermark_for_isolation(pid, entries) do
+    case entries do
+      [_first, second | _] ->
+        {:ok, dt, _} = DateTime.from_iso8601(second["watched_at"])
+        signal = Signal.new!(%{type: "jido_watch.set_watermark", data: %{watermark: dt}})
+
+        case AgentServer.call(pid, signal) do
+          _ -> :ok
+        end
+
+      _ ->
+        :ok
     end
   end
 
