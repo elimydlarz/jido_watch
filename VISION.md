@@ -34,7 +34,7 @@ What the package ships:
 - `%Watch{}`, `%Chunk{}`, `%Experience{}`, `%Impression{}` structs
 - `JidoWatch.Plugin` — Jido plugin that mounts the watching apparatus on the host agent
 - `JidoWatch.Actions.Watch` — the action that runs one full watch end-to-end (per-chunk loop, per-angle parallelism, terminal form_opinion call)
-- `JidoWatch.Actions.SetupJidoWatch` — LLM-callable action that drives OAuth: called bare returns a Trakt authorization URL; called with `code:` exchanges the code for tokens
+- `JidoWatch.Actions.UserSetup` — LLM-callable action that drives OAuth: called bare returns a Trakt authorization URL; called with `code:` exchanges the code for tokens
 - `JidoWatch.Poller` — Trakt poller; consumer-supervised per user
 - Default angles for impression-formation — overridable
 
