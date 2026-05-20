@@ -135,7 +135,7 @@ Override the list by setting `:angles` in plugin state at startup.
 - `%JidoWatch.Chunk{}`, `%JidoWatch.Experience{}`, `%JidoWatch.Impression{}`,
   `%JidoWatch.Subtitle.Cue{}`.
 - `JidoWatch.Plugin` — the Jido plugin that mounts the watching apparatus.
-- `JidoWatch.Actions.SetupJidoWatch` — the LLM-callable OAuth action.
+- `JidoWatch.Actions.UserSetup` — the LLM-callable OAuth action.
 - `JidoWatch.Actions.PollWatches` — one tick of the watching pipeline,
   invoked by signal `jido_watch.poll`.
 - `JidoWatch.Trakt.HTTP` — real Trakt API client.
