@@ -24,18 +24,38 @@ watching (system: test/system/watching_test.exs)
 
 The functional-realism System test: the same `JidoWatch.Plugin` driven by the
 same `Jido.AgentServer` signal API as the hermetic system tests, wired to the
-real `Trakt.HTTP` and `Subtitle.OpenSubtitles` adapters. Excluded from the
-default test run; opt in via `mix test.journey` once `.env` carries Trakt
-tokens (run `mix jido_watch.live_setup` first) and OpenSubtitles credentials.
+real `Trakt.HTTP` and `Subtitle.OpenSubtitles` adapters. The test exercises
+the **whole lifecycle including user authorization** — it calls
+`setup_jido_watch` with no args, prompts the developer (playing the user) to
+paste the resulting Trakt code, exchanges it via the same action, then polls.
+Excluded from the default test run; opt in via `mix test.journey`.
+
+**Precondition:** operator setup (`mix jido_watch.operator_setup`) must have
+run, so `.env` contains an `OPENSUBTITLES_BEARER_TOKEN`. If it hasn't, the
+test fails fast with a clear message and no fallbacks.
 
 ```
 journey (system: test/system/journey_test.exs)
-  when a connected user polls Trakt and the most recent entry has retrievable subtitles
-    then the agent's watch/2 is invoked
-    then experience/3 is invoked once per configured angle
-    then form_opinion/2 is invoked once
-    when the user polls again
-      then no callbacks fire for the entry already processed
+  when the user requests Trakt authorization through setup_jido_watch
+    then an authorization URL is returned
+      when the user authorizes on Trakt and submits the resulting code through setup_jido_watch
+        then the agent becomes connected
+          when the agent polls Trakt for the connected user and the most recent entry has retrievable subtitles
+            then the agent's watch/2 is invoked
+            then experience/3 is invoked once per configured angle
+            then form_opinion/2 is invoked once
+              when the agent polls again
+                then no callbacks fire for the entry already processed
+```
+
+### operator_setup
+
+```
+operator_setup (mix_task: lib/mix/tasks/jido_watch.operator_setup.ex)
+  when the task runs with OpenSubtitles credentials in .env
+    then a bearer token is fetched from OpenSubtitles and written into .env as OPENSUBTITLES_BEARER_TOKEN
+  if any required credential is missing from .env
+    then the task halts with a message naming the missing variable
 ```
 
 ### setup
