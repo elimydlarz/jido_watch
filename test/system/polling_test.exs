@@ -8,6 +8,27 @@ defmodule JidoWatch.System.PollingTest do
   alias JidoWatch.Test.Support.SubtitleInMemory
   alias JidoWatch.Test.Support.TraktInMemory
 
+  describe "when the plugin is mounted with no user connected" do
+    test "then no polls fire" do
+      trakt = TraktInMemory.start!(codes: %{}, watches: [])
+      subtitles = SubtitleInMemory.start!(cues: %{})
+
+      {:ok, _pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: 0.02
+        )
+
+      refute_receive {:watch_called, _}, 2_500
+      refute_receive {:experience_called, _, _}, 50
+      refute_receive {:form_opinion_called, _}, 50
+    end
+  end
+
   describe "when the plugin is mounted with no user connected and the user becomes connected via user_setup" do
     test "then polls begin firing on the configured interval" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
