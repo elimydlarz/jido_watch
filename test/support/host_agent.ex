@@ -75,6 +75,20 @@ defmodule JidoWatch.Test.Support.HostAgent do
     match?({:connected, _}, state.agent.state[:__jido_watch__].connection)
   end
 
+  def access_token(pid) do
+    {:ok, state} = AgentServer.state(pid)
+
+    case state.agent.state[:__jido_watch__].connection do
+      {:connected, %{access_token: token}} -> {:ok, token}
+      _ -> {:error, :not_connected}
+    end
+  end
+
+  def watermark(pid) do
+    {:ok, state} = AgentServer.state(pid)
+    state.agent.state[:__jido_watch__].watermark
+  end
+
   def poll(pid) do
     signal = Signal.new!(%{type: "jido_watch.poll", data: %{}})
 
