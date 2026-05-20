@@ -36,16 +36,22 @@ test fails fast with a clear message and no fallbacks.
 
 ```
 journey (system: test/system/journey_test.exs)
-  when the user requests Trakt authorization through setup_jido_watch
+  when the user requests Trakt authorization through user_setup
     then an authorization URL is returned
-      when the user authorizes on Trakt and submits the resulting code through setup_jido_watch
+      when the user authorizes on Trakt and submits the resulting code through user_setup
         then the agent becomes connected
-          when the agent polls Trakt for the connected user and the most recent entry has retrievable subtitles
-            then the agent's watch/2 is invoked
-            then experience/3 is invoked once per configured angle
-            then form_opinion/2 is invoked once
-              when the agent polls again
-                then no callbacks fire for the entry already processed
+          when the agent polls Trakt for the connected user
+            when there are new entries past the watermark
+              when the most recent entry's subtitles can be fetched from OpenSubtitles
+                then the agent's watch/2 is invoked
+                then experience/3 is invoked once per configured angle
+                then form_opinion/2 is invoked once
+                  when the agent polls again
+                    then no callbacks fire for the entry already processed
+              when the most recent entry's subtitles cannot be fetched from OpenSubtitles
+                then no callbacks fire
+            when there are no new entries past the watermark
+              then no callbacks fire
 ```
 
 ### operator_setup
