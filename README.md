@@ -140,9 +140,6 @@ Override the list by setting `:angles` in plugin state at startup.
   invoked by signal `jido_watch.poll`.
 - `JidoWatch.Trakt.HTTP` — real Trakt API client.
 - `JidoWatch.Subtitle.Source` — driven port for fetching subtitle cues.
-- `mix jido_watch.live_setup` — interactive task that walks the human
-  authorization step against the real Trakt API, useful for one-off
-  account connection during development.
 
 ## Invariants worth knowing
 
