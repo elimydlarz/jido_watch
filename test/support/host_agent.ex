@@ -50,15 +50,15 @@ defmodule JidoWatch.Test.Support.HostAgent do
     )
   end
 
-  def setup_jido_watch(pid) do
-    case call_setup(pid, %{}) do
+  def user_setup(pid) do
+    case call_user_setup(pid, %{}) do
       {:ok, agent} -> {:ok, agent.state[:__jido_watch__].last_setup_url}
       other -> other
     end
   end
 
-  def complete_setup(pid, code) do
-    case call_setup(pid, %{code: code}) do
+  def complete_user_setup(pid, code) do
+    case call_user_setup(pid, %{code: code}) do
       {:ok, agent} ->
         case agent.state[:__jido_watch__].last_setup_error do
           nil -> :ok
