@@ -25,14 +25,16 @@ watching (system: test/system/watching_test.exs)
 The functional-realism System test: the same `JidoWatch.Plugin` driven by the
 same `Jido.AgentServer` signal API as the hermetic system tests, wired to the
 real `Trakt.HTTP` and `Subtitle.OpenSubtitles` adapters. The test exercises
-the **whole lifecycle including user authorization** — it calls
-`setup_jido_watch` with no args, prompts the developer (playing the user) to
-paste the resulting Trakt code, exchanges it via the same action, then polls.
-Excluded from the default test run; opt in via `mix test.journey`.
+the **whole runtime lifecycle**: app startup logs into OpenSubtitles to obtain
+a bearer, `user_setup` produces a Trakt authorization URL, the developer
+(playing the user) authorizes and pastes the resulting code, the agent polls,
+and the pipeline runs. Excluded from the default test run; opt in via
+`mix test.journey`.
 
-**Precondition:** operator setup (`mix jido_watch.operator_setup`) must have
-run, so `.env` contains an `OPENSUBTITLES_BEARER_TOKEN`. If it hasn't, the
-test fails fast with a clear message and no fallbacks.
+**Precondition:** `.env` must contain the static credentials listed in
+`.env.example` (Trakt client id/secret, OpenSubtitles api key/username/password/user_agent).
+If anything is missing, the test fails fast with a message naming the variable;
+no fallbacks.
 
 ```
 journey (system: test/system/journey_test.exs)
