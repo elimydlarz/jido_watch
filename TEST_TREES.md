@@ -151,8 +151,8 @@ Trees here describe the real driven adapters that talk to external infrastructur
 Tests run against the real adapter module with HTTP responses provided by
 `Req.Test`'s plug stub — the request shape and response mapping are real; the
 network is not. The same module is also exercised end-to-end against the live
-Trakt API by the `mix jido_watch.live_setup` task, which keeps the human
-authorization step in the loop.
+Trakt API by the `journey` system test, which keeps the human
+authorization step in the loop via `user_setup`.
 
 ### Subtitle.OpenSubtitles
 
