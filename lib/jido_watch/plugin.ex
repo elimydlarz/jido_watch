@@ -8,6 +8,7 @@ defmodule JidoWatch.Plugin do
 
   alias JidoWatch.Actions.PollWatches
   alias JidoWatch.Actions.UserSetup
+  alias JidoWatch.Poller
 
   use Jido.Plugin,
     name: "jido_watch",
@@ -32,9 +33,20 @@ defmodule JidoWatch.Plugin do
       connection: :unconnected,
       watermark: nil,
       last_setup_url: nil,
-      last_setup_error: nil
+      last_setup_error: nil,
+      poll_interval_minutes: nil
     }
 
     {:ok, Map.merge(defaults, existing)}
+  end
+
+  @impl Jido.Plugin
+  def child_spec(_config) do
+    agent_pid = self()
+
+    %{
+      id: Poller,
+      start: {Poller, :start_link, [[agent_pid: agent_pid]]}
+    }
   end
 end
