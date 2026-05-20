@@ -1,9 +1,0 @@
-{
-  "sessionId": "158cd58f-1918-4e7e-810d-30fee37a1e86",
-  "pid": 64761,
-  "hostname": "Eli Mydlarz",
-  "clockedInAt": "2026-05-20T08:31:47.901Z",
-  "lastActiveAt": "2026-05-20T08:44:20.779Z",
-  "branch": "main",
-  "task": "Just ran the new journey test, and this was not expected AFAIK:"
-}

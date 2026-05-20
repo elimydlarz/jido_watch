@@ -20,6 +20,29 @@ watching (system: test/system/watching_test.exs)
     then the agent's callbacks are not invoked again for it
 ```
 
+### polling
+
+The plugin owns Trakt polling — once a user is connected, polls fire on a
+cadence for the lifetime of the agent. Nothing external schedules them.
+Polling is gated by auth (CLAUDE.md): no ticks fire while unconnected; they
+begin on the connection transition and die with the agent. The cadence is
+configurable per agent via `:poll_interval_minutes` in plugin state.
+
+```
+polling (system: test/system/polling_test.exs)
+  when the plugin is mounted with no user connected
+    then no polls fire
+    when the user becomes connected via user_setup
+      then polls begin firing on the configured interval
+      then they continue for as long as the agent runs
+  when the plugin is mounted with the user already connected
+    then polls begin firing on the configured interval
+  when the plugin mounts with a custom :poll_interval_minutes in plugin state
+    then polls fire on that interval rather than the default
+  when the agent terminates
+    then polling stops
+```
+
 ### journey
 
 The functional-realism System test: the same `JidoWatch.Plugin` driven by the
