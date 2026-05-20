@@ -144,6 +144,9 @@ Override the list by setting `:angles` in plugin state at startup.
 - `JidoWatch.Actions.UserSetup` — the LLM-callable OAuth action.
 - `JidoWatch.Actions.PollWatches` — one tick of the watching pipeline,
   invoked by signal `jido_watch.poll`.
+- `JidoWatch.Poller` — internal periodic process started under the agent's
+  supervisor; emits the `jido_watch.poll` signal on the configured cadence
+  once a user is connected.
 - `JidoWatch.Trakt.HTTP` — real Trakt API client.
 - `JidoWatch.Subtitle.Source` — driven port for fetching subtitle cues.
 
