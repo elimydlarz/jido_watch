@@ -35,7 +35,7 @@ Small and bidirectional.
 
 **Plugin exposes one LLM-callable action the agent uses to drive setup.**
 
-- `setup_jido_watch` — called with no args, returns an authorization URL; called with `code: "..."`, exchanges the code for tokens and connects the user. The LLM decides when in the conversation to call it.
+- `user_setup` — called with no args, returns an authorization URL; called with `code: "..."`, exchanges the code for tokens and connects the user. The LLM decides when in the conversation to call it.
 
 ### The asymmetry
 
@@ -47,13 +47,13 @@ If you find yourself adding a callback the plugin calls during setup, you're cro
 
 ### How the flows play out
 
-**Setup flow.** User chats with the agent. The agent's LLM, prompted to offer Trakt connection when relevant, decides this is the moment and calls `setup_jido_watch`. Tool returns a URL. The LLM weaves it into a reply in its own voice. The user authorizes out of band on Trakt, gets a code, pastes it back. The LLM recognises the code in the user message and calls `setup_jido_watch(code: "...")`. Tool exchanges, marks the user connected. LLM confirms in conversation. The plugin now polls.
+**Setup flow.** User chats with the agent. The agent's LLM, prompted to offer Trakt connection when relevant, decides this is the moment and calls `user_setup`. Tool returns a URL. The LLM weaves it into a reply in its own voice. The user authorizes out of band on Trakt, gets a code, pastes it back. The LLM recognises the code in the user message and calls `user_setup(code: "...")`. Tool exchanges, marks the user connected. LLM confirms in conversation. The plugin now polls.
 
 **Watching flow.** Trakt poll discovers a new entry past the watermark for a connected user. Plugin fetches subtitles. Plugin slices cues into 10-minute attention windows. For each chunk in order, plugin calls `agent.watch(chunk)` and collects the experience. Once all chunks are processed, plugin calls `agent.experience(experiences, angle)` once per configured angle in parallel and collects the impressions. Plugin calls `agent.form_opinion(impressions)`. Agent composes its message and delivers it.
 
 ### Invariants
 
-- **Polling is gated by auth.** No tokens for a user, no polling for that user. The `setup_jido_watch` action is the only path to enabling watching.
+- **Polling is gated by auth.** No tokens for a user, no polling for that user. The `user_setup` action is the only path to enabling watching.
 - **Transcript-or-nothing.** Watches without subtitle content produce no opinion. Episode metadata alone is hollow.
 - **Sequential chunks, parallel angles.** Chunk N+1 doesn't start until chunk N's `watch/2` returns. All angle `experience/3` calls run in parallel; `form_opinion/2` waits on all of them.
 - **No partial opinions.** If any callback in the pipeline returns an error, the whole watch fails — we don't deliver an opinion built from partial inputs.
