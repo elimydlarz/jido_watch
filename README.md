@@ -76,10 +76,10 @@ The callbacks receive the `%Jido.Agent{}` struct, not a server pid, so a
 callback can read `agent.state` directly for any clients or configuration
 the host stashed there.
 
-## The `setup_jido_watch` action
+## The `user_setup` action
 
 The plugin exposes one LLM-callable action your agent's LLM should be told
-about: `setup_jido_watch`. The LLM decides *when* in a conversation to
+about: `user_setup`. The LLM decides *when* in a conversation to
 bring up Trakt connection.
 
 - Called with no args, returns a Trakt authorization URL. The LLM weaves
@@ -88,7 +88,7 @@ bring up Trakt connection.
   for tokens. From that point on, the plugin can poll for new watches.
 
 The action is registered with Jido under the signal type
-`jido_watch.setup_jido_watch`. Wire it into your agent's tool surface so
+`jido_watch.user_setup`. Wire it into your agent's tool surface so
 the LLM can call it directly.
 
 ## Configuration
@@ -146,7 +146,7 @@ Override the list by setting `:angles` in plugin state at startup.
 
 ## Invariants worth knowing
 
-- **Polling is gated by auth.** No tokens, no polling. `setup_jido_watch`
+- **Polling is gated by auth.** No tokens, no polling. `user_setup`
   is the only path to enabling watching.
 - **Transcript-or-nothing.** Watches without subtitle content produce no
   opinion. Episode metadata alone is hollow.
