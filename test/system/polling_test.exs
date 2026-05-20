@@ -88,4 +88,34 @@ defmodule JidoWatch.System.PollingTest do
       assert poll_count_after - poll_count_before >= 3
     end
   end
+
+  describe "when the plugin is mounted with the user already connected" do
+    test "then polls begin firing on the configured interval" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+      entry = %{"id" => "ep-1"}
+
+      trakt = TraktInMemory.start!(codes: %{}, watches: [entry])
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{
+            "ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "a"}]
+          }
+        )
+
+      {:ok, _pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: 0.02,
+          connection: {:connected, tokens}
+        )
+
+      refute_receive {:watch_called, _}, 800
+      assert_receive {:watch_called, _}, 2_000
+    end
+  end
 end
