@@ -62,5 +62,30 @@ defmodule JidoWatch.System.PollingTest do
       refute_receive {:watch_called, _}, 1_500
       assert_receive {:watch_called, _}, 3_000
     end
+
+    test "then they continue for as long as the agent runs" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+
+      trakt = TraktInMemory.start!(codes: %{"code" => tokens}, watches: [])
+      subtitles = SubtitleInMemory.start!(cues: %{})
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: 0.02
+        )
+
+      :ok = HostAgent.complete_user_setup(pid, "code")
+
+      poll_count_before = TraktInMemory.recent_watches_call_count(trakt)
+      Process.sleep(4_500)
+      poll_count_after = TraktInMemory.recent_watches_call_count(trakt)
+
+      assert poll_count_after - poll_count_before >= 3
+    end
   end
 end
