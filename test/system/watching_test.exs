@@ -38,7 +38,7 @@ defmodule JidoWatch.System.WatchingTest do
           test_pid: self()
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       assert_receive {:watch_called, _chunk_1}, 1_000
@@ -76,7 +76,7 @@ defmodule JidoWatch.System.WatchingTest do
           angles: [:emerging_themes, :loose_threads]
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       assert_receive {:experience_called, :emerging_themes, experiences_a}, 1_000
@@ -115,7 +115,7 @@ defmodule JidoWatch.System.WatchingTest do
           angles: [:emerging_themes, :loose_threads]
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       assert_receive {:form_opinion_called, impressions}, 1_000
@@ -140,7 +140,7 @@ defmodule JidoWatch.System.WatchingTest do
           test_pid: self()
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       refute_receive {:watch_called, _}, 200
@@ -166,7 +166,7 @@ defmodule JidoWatch.System.WatchingTest do
           test_pid: self()
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       refute_receive {:form_opinion_called, _}, 300
@@ -203,7 +203,7 @@ defmodule JidoWatch.System.WatchingTest do
           test_pid: self()
         )
 
-      :ok = HostAgent.complete_setup(pid, "code")
+      :ok = HostAgent.complete_user_setup(pid, "code")
       :ok = HostAgent.poll(pid)
 
       assert_receive {:watch_called, _}, 1_000
