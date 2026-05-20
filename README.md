@@ -107,7 +107,8 @@ Jido.AgentServer.start_link(
       subtitles: {MyApp.MySubtitleSource, my_handle},
       trakt_client_id: System.fetch_env!("TRAKT_CLIENT_ID"),
       trakt_client_secret: System.fetch_env!("TRAKT_CLIENT_SECRET"),
-      angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads]
+      angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads],
+      poll_interval_minutes: 60
     }
   }
 )
@@ -116,6 +117,11 @@ Jido.AgentServer.start_link(
 The `:trakt` and `:subtitles` values are `{module, handle}` pairs — the
 module implements the `JidoWatch.Trakt.Client` and `JidoWatch.Subtitle.Source`
 behaviours respectively. `JidoWatch.Trakt.HTTP` is the bundled real client.
+
+`:poll_interval_minutes` controls how often the plugin polls Trakt for new
+watches. Polling is gated by auth — no ticks fire until a user is connected
+via `user_setup`, at which point polls begin on the configured cadence and
+continue for the lifetime of the agent. Defaults to 60 if omitted.
 
 ## Default angles
 
