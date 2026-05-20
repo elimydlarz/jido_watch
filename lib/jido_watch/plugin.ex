@@ -7,14 +7,14 @@ defmodule JidoWatch.Plugin do
   """
 
   alias JidoWatch.Actions.PollWatches
-  alias JidoWatch.Actions.SetupJidoWatch
+  alias JidoWatch.Actions.UserSetup
 
   use Jido.Plugin,
     name: "jido_watch",
     state_key: :__jido_watch__,
-    actions: [SetupJidoWatch, PollWatches],
+    actions: [UserSetup, PollWatches],
     signal_routes: [
-      {"setup_jido_watch", SetupJidoWatch},
+      {"user_setup", UserSetup},
       {"poll", PollWatches}
     ]
 
