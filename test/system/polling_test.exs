@@ -81,9 +81,9 @@ defmodule JidoWatch.System.PollingTest do
 
       :ok = HostAgent.complete_user_setup(pid, "code")
 
-      poll_count_before = TraktInMemory.recent_watches_call_count(trakt)
+      poll_count_before = TraktInMemory.recent_watches_calls(trakt)
       Process.sleep(4_500)
-      poll_count_after = TraktInMemory.recent_watches_call_count(trakt)
+      poll_count_after = TraktInMemory.recent_watches_calls(trakt)
 
       assert poll_count_after - poll_count_before >= 3
     end
