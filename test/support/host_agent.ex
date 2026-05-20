@@ -28,6 +28,7 @@ defmodule JidoWatch.Test.Support.HostAgent do
     angles = Keyword.get(opts, :angles, [:theme])
     connection = Keyword.get(opts, :connection, :unconnected)
     watermark = Keyword.get(opts, :watermark)
+    poll_interval_minutes = Keyword.get(opts, :poll_interval_minutes)
 
     plugin_state =
       %{
@@ -39,6 +40,7 @@ defmodule JidoWatch.Test.Support.HostAgent do
         connection: connection,
         watermark: watermark
       }
+      |> maybe_put(:poll_interval_minutes, poll_interval_minutes)
 
     AgentServer.start_link(
       agent: __MODULE__,
