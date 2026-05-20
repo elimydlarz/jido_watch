@@ -95,6 +95,8 @@ defmodule JidoWatch.System.JourneyTest do
 
       _ = IO.gets("Press enter when watched: ")
 
+      diagnose_pipeline(pid, trakt_handle, os_authed)
+
       :ok = HostAgent.poll(pid)
 
       assert_receive {:watch_called, first_chunk}, 60_000
