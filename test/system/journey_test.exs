@@ -126,6 +126,75 @@ defmodule JidoWatch.System.JourneyTest do
     end
   end
 
+  defp diagnose_pipeline(pid, trakt_handle, os_handle) do
+    {:ok, access_token} = HostAgent.access_token(pid)
+    watermark = HostAgent.watermark(pid)
+
+    IO.puts("""
+
+    --- Pipeline pre-flight diagnostic ---
+    Plugin watermark: #{inspect(watermark)}
+    Calling Trakt /sync/history with the stored access token…
+    """)
+
+    case HTTP.recent_watches(trakt_handle, access_token) do
+      {:ok, []} ->
+        IO.puts(
+          "  Trakt returned 0 entries. The watch you marked hasn't propagated yet — wait a few seconds and re-run, or check trakt.tv/users/me/history."
+        )
+
+      {:ok, entries} ->
+        IO.puts("  Trakt returned #{length(entries)} entries (newest first).")
+
+        Enum.each(entries, fn entry ->
+          past? = entry_past_watermark?(entry, watermark)
+          marker = if past?, do: "→ will process", else: "✗ before watermark"
+
+          IO.puts(
+            "  #{marker}: type=#{inspect(entry["type"])} watched_at=#{entry["watched_at"]} title=#{inspect(title_of(entry))}"
+          )
+        end)
+
+        entries
+        |> Enum.filter(&entry_past_watermark?(&1, watermark))
+        |> case do
+          [] ->
+            IO.puts("  No entries past the watermark — poll will fire no callbacks.")
+
+          past ->
+            IO.puts("\n  Trying OpenSubtitles.fetch for each past-watermark entry:")
+
+            Enum.each(past, fn entry ->
+              case OpenSubtitles.fetch(os_handle, entry) do
+                {:ok, cues} ->
+                  IO.puts(
+                    "    ok #{inspect(title_of(entry))}: #{length(cues)} cues (first: #{first_cue_excerpt(cues)})"
+                  )
+
+                {:error, reason} ->
+                  IO.puts("    error #{inspect(title_of(entry))}: #{inspect(reason)}")
+              end
+            end)
+        end
+
+      {:error, reason} ->
+        IO.puts("  Trakt error: #{inspect(reason)}")
+    end
+
+    IO.puts("--- End diagnostic ---\n")
+  end
+
+  defp entry_past_watermark?(_entry, nil), do: true
+
+  defp entry_past_watermark?(%{"watched_at" => watched_at}, watermark) when is_binary(watched_at) do
+    case DateTime.from_iso8601(watched_at) do
+      {:ok, dt, _} -> DateTime.compare(dt, watermark) == :gt
+      _ -> true
+    end
+  end
+
+  defp entry_past_watermark?(_, _), do: true
+
   defp redact(token) when is_binary(token) and byte_size(token) > 8,
     do: binary_part(token, 0, 4) <> "…" <> binary_part(token, byte_size(token) - 4, 4)
 
