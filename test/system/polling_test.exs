@@ -292,7 +292,7 @@ defmodule JidoWatch.System.PollingTest do
           codes: %{},
           watches: [entry],
           transient_failures_remaining: 2,
-          transient_error: {:trakt_unavailable, 503}
+          transient_error: {:trakt_status, 503, ""}
         )
 
       subtitles =
