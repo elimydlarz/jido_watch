@@ -234,7 +234,7 @@ Adapter: Subtitle.OpenSubtitles (src: lib/jido_watch/subtitle/open_subtitles.ex;
 ### Trakt.HTTP
 
 ```
-Trakt.HTTP (adapter: test/adapter/trakt_http_test.exs)
+Adapter: Trakt.HTTP (src: lib/jido_watch/trakt/http.ex; integration: test/adapter/trakt_http_test.exs)
   exchange_code/2
     when given a valid auth code
       then it POSTs the code with client credentials and grant_type to /oauth/token
