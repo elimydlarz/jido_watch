@@ -184,7 +184,7 @@ Domain: Chunker (src: lib/jido_watch/chunker.ex; unit: test/domain/chunker_test.
 ### Srt
 
 ```
-Srt (domain: test/domain/srt_test.exs)
+Domain: Srt (src: lib/jido_watch/srt.ex; unit: test/domain/srt_test.exs)
   parse/1
     then each block becomes a Cue with start_ms and end_ms parsed from the timestamp line
     then multi-line cue text is joined with newlines
