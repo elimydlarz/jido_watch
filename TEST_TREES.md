@@ -202,6 +202,22 @@ or real, must guarantee. The contract suite is a macro module that both the
 in-memory adapter test and the real adapter test invoke; both reify the same
 tree.
 
+### Subtitle.Source
+
+```
+Port: Subtitle.Source (src: lib/jido_watch/subtitle/source.ex; unit: test/adapter/subtitle_in_memory_test.exs; integration: test/adapter/subtitle_open_subtitles_test.exs)
+  fetch/2
+    when given an entry whose subtitles are available
+      then returns {:ok, list_of_cues}
+    when given an entry whose subtitles are not available
+      then returns an error
+```
+
+The watch-entry shape is intentionally not part of the port contract — each
+adapter is free to expect whatever shape suits its lookup (the in-memory uses
+`"id"`; the OpenSubtitles adapter uses `"type"`/`"movie"`/`"episode"` plus
+nested imdb_id). The contract only fixes the output shape and error semantics.
+
 ### Trakt.Client
 
 ```
