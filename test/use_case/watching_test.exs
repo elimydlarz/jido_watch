@@ -91,7 +91,7 @@ defmodule JidoWatch.UseCase.WatchingTest do
   end
 
   describe "run/1 when an entry has no transcript available" do
-    test "then no callbacks fire for it but the watermark still advances past it" do
+    test "then no callbacks fire for it, the watermark still advances past it, and it stays on pending_watches for the next tick" do
       entry = %{
         "id" => "no-subs",
         "type" => "movie",
@@ -104,7 +104,7 @@ defmodule JidoWatch.UseCase.WatchingTest do
 
       agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
 
-      assert {:ok, new_watermark} =
+      assert {:ok, %{watermark: new_watermark, pending_watches: pending}} =
                Watching.run(%{
                  trakt: trakt,
                  subtitles: subtitles,
@@ -119,6 +119,71 @@ defmodule JidoWatch.UseCase.WatchingTest do
       refute_receive {:form_opinion_called, _}, 50
 
       assert new_watermark == ~U[2025-07-01 00:00:00Z]
+      assert pending == [entry]
+    end
+  end
+
+  describe "run/1 when an entry is already on pending_watches and its transcript is now available" do
+    test "then it is processed and removed from pending_watches" do
+      entry = %{
+        "id" => "ep-late",
+        "type" => "movie",
+        "watched_at" => "2025-07-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      trakt = TraktInMemory.start!(watches: [])
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{"ep-late" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
+        )
+
+      agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
+
+      assert {:ok, %{pending_watches: []}} =
+               Watching.run(%{
+                 trakt: trakt,
+                 subtitles: subtitles,
+                 access_token: "tok",
+                 host: RecordingHost,
+                 agent: agent,
+                 angles: [:theme],
+                 watermark: ~U[2025-07-01 00:00:00Z],
+                 pending_watches: [entry]
+               })
+
+      assert_receive {:watch_called, _}
+      assert_receive {:form_opinion_called, _}
+    end
+  end
+
+  describe "run/1 when a Trakt entry is already on pending_watches" do
+    test "then it is not added again" do
+      entry = %{
+        "id" => "ep-dup",
+        "type" => "movie",
+        "watched_at" => "2025-07-01T00:00:00Z",
+        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+      }
+
+      trakt = TraktInMemory.start!(watches: [entry])
+      subtitles = SubtitleInMemory.start!(cues: %{})
+
+      agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
+
+      assert {:ok, %{pending_watches: pending}} =
+               Watching.run(%{
+                 trakt: trakt,
+                 subtitles: subtitles,
+                 access_token: "tok",
+                 host: RecordingHost,
+                 agent: agent,
+                 angles: [:theme],
+                 pending_watches: [entry]
+               })
+
+      assert pending == [entry]
     end
   end
 
