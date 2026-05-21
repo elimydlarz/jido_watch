@@ -34,8 +34,7 @@ defmodule JidoWatch.Plugin do
       watermark: nil,
       last_setup_url: nil,
       last_setup_error: nil,
-      poll_interval_minutes: nil,
-      transient_retry_delay_ms: 10_000
+      poll_interval_minutes: nil
     }
 
     {:ok, Map.merge(defaults, existing)}
