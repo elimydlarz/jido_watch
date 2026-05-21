@@ -9,9 +9,7 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
   alias JidoWatch.Test.Support.TraktClientContract
 
   defp setup_for(scenario) do
-    {HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug_for(scenario)),
-     scenario}
-    |> then(fn {handle, _} -> {HTTP, handle} end)
+    {HTTP, HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug_for(scenario))}
   end
 
   defp plug_for(:exchange_code_valid) do
