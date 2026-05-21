@@ -139,4 +139,27 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
       assert new_state.pending_watches == []
     end
   end
+
+  describe "run/2 when the connection is {:connected, tokens} and the pipeline returns :unauthorized and the refresh returns :invalid_grant" do
+    test "then the connection flips to :unconnected" do
+      old_tokens = %{access_token: "old-tok", refresh_token: "dead-ref", expires_in: 7_776_000}
+
+      trakt =
+        TraktInMemory.start!(
+          unauthorized_access_tokens: ["old-tok"],
+          refresh_chain: %{}
+        )
+
+      subtitles = SubtitleInMemory.start!()
+
+      agent =
+        agent_with(
+          base_plugin_state(trakt, subtitles, %{connection: {:connected, old_tokens}})
+        )
+
+      assert {:ok, %{__jido_watch__: new_state}} = PollWatches.run(%{}, %{agent: agent})
+
+      assert new_state.connection == :unconnected
+    end
+  end
 end
