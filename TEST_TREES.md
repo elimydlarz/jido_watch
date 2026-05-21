@@ -7,7 +7,7 @@ Trees here describe top-level, user-facing behaviour. Tests run against a real `
 ### watching
 
 ```
-watching (system: test/system/watching_test.exs)
+System: watching (functional: test/system/watching_test.exs)
   when the user watches new content
     then the agent's watch/2 is called once per chunk
     then the agent's experience/3 is called once per angle, with the experiences from watch
