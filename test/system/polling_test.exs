@@ -231,6 +231,57 @@ defmodule JidoWatch.System.PollingTest do
     end
   end
 
+  describe "when Trakt returns 401 for a request during a poll and the refresh returns an invalid-grant response" do
+    test "then the user becomes unconnected, no further polls fire, and re-running user_setup with a valid code resumes polling" do
+      old_tokens = %{access_token: "old-tok", refresh_token: "ref-dead", expires_in: 7_776_000}
+      fresh_tokens = %{access_token: "fresh-tok", refresh_token: "fresh-ref", expires_in: 7_776_000}
+      entry = %{"id" => "ep-1"}
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{"good-code" => fresh_tokens},
+          watches: [entry],
+          unauthorized_access_tokens: ["old-tok"],
+          refresh_chain: %{}
+        )
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{
+            "ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "a"}]
+          }
+        )
+
+      interval_minutes = 0.02
+      interval_ms = round(interval_minutes * 60_000)
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: interval_minutes,
+          connection: {:connected, old_tokens}
+        )
+
+      Process.sleep(2 * interval_ms + 300)
+
+      refute HostAgent.connected?(pid)
+      refute_receive {:watch_called, _}, 50
+
+      calls_before = TraktInMemory.recent_watches_calls(trakt)
+      Process.sleep(3 * interval_ms)
+      calls_after = TraktInMemory.recent_watches_calls(trakt)
+      assert calls_after == calls_before
+
+      :ok = HostAgent.complete_user_setup(pid, "good-code")
+
+      assert_receive {:watch_called, _}, 3_000
+    end
+  end
+
   describe "when the agent terminates" do
     test "then polling stops" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
