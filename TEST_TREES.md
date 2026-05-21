@@ -64,6 +64,8 @@ polling (system: test/system/polling_test.exs)
         then no callbacks fire for that tick
         then the watermark is not advanced
         then polling continues on the next interval
+  when the refresh call itself fails transiently and an attempt succeeds within three
+    then the tick proceeds normally from there
   when the agent terminates
     then polling stops
 ```
