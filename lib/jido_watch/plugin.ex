@@ -32,6 +32,7 @@ defmodule JidoWatch.Plugin do
       angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads],
       connection: :unconnected,
       watermark: nil,
+      pending_watches: [],
       last_setup_url: nil,
       last_setup_error: nil,
       poll_interval_minutes: nil
