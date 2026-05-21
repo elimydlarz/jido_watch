@@ -29,10 +29,10 @@ defmodule JidoWatch.Test.Support.SubtitleSourceContract do
         end
       end
 
-      describe "fetch/2 when given an entry whose subtitles are not available" do
-        test "then returns an error" do
+      describe "fetch/2 when given an entry whose subtitles cannot be found" do
+        test "then returns {:ok, :no_transcript}" do
           {mod, handle, entry} = setup_for(:fetch_unavailable)
-          assert {:error, _} = mod.fetch(handle, entry)
+          assert {:ok, :no_transcript} = mod.fetch(handle, entry)
         end
       end
     end
