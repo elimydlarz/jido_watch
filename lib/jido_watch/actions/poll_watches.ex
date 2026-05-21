@@ -5,9 +5,11 @@ defmodule JidoWatch.Actions.PollWatches do
 
   Gated by connection: an agent without Trakt tokens does no Trakt I/O at all.
 
-  Refreshes the access token when Trakt returns `:unauthorized` and retries the
+  Refreshes the access token when Trakt returns `:unauthorized` and replays the
   tick once with the new tokens. Refresh tokens rotate on every use, so the
-  new pair atomically replaces the old in plugin state.
+  new pair atomically replaces the old in plugin state. Transient HTTP failures
+  (5xx, 408, 429, transport errors) are retried inside the Trakt and subtitle
+  adapters via Req's `:safe_transient` retry policy — not here.
   """
 
   use Jido.Action,
@@ -23,15 +25,13 @@ defmodule JidoWatch.Actions.PollWatches do
     poll_for_connection(plugin_state.connection, plugin_state, agent)
   end
 
-  @max_attempts 3
-
   defp poll_for_connection({:connected, tokens}, plugin_state, agent) do
-    case run_with_retry(plugin_state, tokens, agent) do
+    case run_pipeline(plugin_state, tokens, agent) do
       {:ok, new_watermark} ->
         {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
 
       {:error, :unauthorized} ->
-        refresh_and_retry(plugin_state, tokens, agent)
+        refresh_and_replay(plugin_state, tokens, agent)
 
       {:error, _} ->
         {:ok, %{}}
@@ -40,21 +40,14 @@ defmodule JidoWatch.Actions.PollWatches do
 
   defp poll_for_connection(:unconnected, _plugin_state, _agent), do: {:ok, %{}}
 
-  defp run_with_retry(plugin_state, tokens, agent) do
-    with_retry(fn -> run_pipeline(plugin_state, tokens, agent) end, plugin_state.transient_retry_delay_ms)
-  end
-
-  defp refresh_and_retry(plugin_state, %{refresh_token: refresh_token}, agent) do
+  defp refresh_and_replay(plugin_state, %{refresh_token: refresh_token}, agent) do
     {trakt_mod, trakt_handle} = plugin_state.trakt
 
-    case with_retry(
-           fn -> trakt_mod.exchange_refresh_token(trakt_handle, refresh_token) end,
-           plugin_state.transient_retry_delay_ms
-         ) do
+    case trakt_mod.exchange_refresh_token(trakt_handle, refresh_token) do
       {:ok, new_tokens} ->
         new_plugin_state = %{plugin_state | connection: {:connected, new_tokens}}
 
-        case run_with_retry(new_plugin_state, new_tokens, agent) do
+        case run_pipeline(new_plugin_state, new_tokens, agent) do
           {:ok, new_watermark} ->
             {:ok, %{__jido_watch__: %{new_plugin_state | watermark: new_watermark}}}
 
@@ -69,25 +62,6 @@ defmodule JidoWatch.Actions.PollWatches do
         {:ok, %{}}
     end
   end
-
-  defp with_retry(fun, delay_ms, attempt \\ 1) do
-    case fun.() do
-      {:ok, _} = ok ->
-        ok
-
-      {:error, reason} = err ->
-        if transient?(reason) and attempt < @max_attempts do
-          Process.sleep(delay_ms)
-          with_retry(fun, delay_ms, attempt + 1)
-        else
-          err
-        end
-    end
-  end
-
-  defp transient?({:trakt_status, status, _}) when status >= 500, do: true
-  defp transient?(%{__exception__: true}), do: true
-  defp transient?(_), do: false
 
   defp run_pipeline(plugin_state, %{access_token: access_token}, agent) do
     Watching.run(%{
