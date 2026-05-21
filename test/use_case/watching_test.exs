@@ -223,7 +223,7 @@ defmodule JidoWatch.UseCase.WatchingTest do
 
       agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
 
-      assert {:ok, new_watermark} =
+      assert {:ok, %{watermark: new_watermark}} =
                Watching.run(%{
                  trakt: trakt,
                  subtitles: subtitles,
