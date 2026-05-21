@@ -50,19 +50,23 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   @impl JidoWatch.Trakt.Client
   def recent_watches(pid, access_token) do
     Agent.get_and_update(pid, fn state ->
-      result =
+      {result, new_state} =
         cond do
           MapSet.member?(state.unauthorized_access_tokens, access_token) ->
-            {:error, :unauthorized}
+            {{:error, :unauthorized}, state}
+
+          state.transient_failures_remaining > 0 ->
+            {{:error, state.transient_error},
+             Map.update!(state, :transient_failures_remaining, &(&1 - 1))}
 
           state.recent_watches_error ->
-            {:error, state.recent_watches_error}
+            {{:error, state.recent_watches_error}, state}
 
           true ->
-            {:ok, state.watches}
+            {{:ok, state.watches}, state}
         end
 
-      {result, Map.update!(state, :recent_watches_calls, &(&1 + 1))}
+      {result, Map.update!(new_state, :recent_watches_calls, &(&1 + 1))}
     end)
   end
 
