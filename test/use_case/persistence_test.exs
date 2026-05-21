@@ -12,7 +12,6 @@ defmodule JidoWatch.UseCase.PersistenceTest do
   @table :jido_watch_persistence_test_storage
 
   setup do
-    :ok = EtsStorage.ensure_ready(table: @table)
     :ok = EtsStorage.delete_checkpoint(checkpoint_key(), table: @table)
     :ok
   end
