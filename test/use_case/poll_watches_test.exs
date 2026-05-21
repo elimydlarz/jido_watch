@@ -1,3 +1,12 @@
+defmodule RefreshFailingTrakt do
+  @moduledoc false
+  @behaviour JidoWatch.Trakt.Client
+
+  def exchange_code(_, _), do: raise("unused")
+  def exchange_refresh_token(_, _), do: {:error, :network_down}
+  def recent_watches(_, _), do: {:error, :unauthorized}
+end
+
 defmodule JidoWatch.UseCase.PollWatchesTest do
   use ExUnit.Case, async: true
 
