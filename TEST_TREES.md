@@ -44,6 +44,26 @@ polling (system: test/system/polling_test.exs)
     then no callbacks fire for that tick
     then the watermark is not advanced
     then polling continues on the next interval
+  when Trakt returns 401 for a request during a poll
+    then a refresh is attempted with the stored refresh_token
+      when the refresh succeeds
+        then the new access_token and refresh_token replace the stored pair
+        then the original request is retried with the new access_token
+        then the tick proceeds normally from there
+      if the refresh returns an invalid-grant response
+        then the user becomes unconnected
+        then no further polls fire for that user
+          when the user re-runs user_setup with a valid code
+            then polling resumes
+  when Trakt fails transiently for a request during a poll
+    then the request is retried after a delay, up to three attempts total
+      when an attempt succeeds within those three
+        then the tick proceeds normally from there
+      if all three attempts fail
+        then the agent does not crash
+        then no callbacks fire for that tick
+        then the watermark is not advanced
+        then polling continues on the next interval
   when the agent terminates
     then polling stops
 ```
