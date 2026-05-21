@@ -145,7 +145,7 @@ defmodule JidoWatch.Adapter.SubtitleOpenSubtitlesTest do
   end
 
   describe "fetch/2 if the search returns no subtitles" do
-    test "then the error is :no_subtitles" do
+    test "then the result is {:ok, :no_transcript}" do
       plug = fn conn ->
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
@@ -154,7 +154,7 @@ defmodule JidoWatch.Adapter.SubtitleOpenSubtitlesTest do
 
       entry = %{"type" => "movie", "movie" => %{"ids" => %{"imdb" => "tt1234567"}}}
 
-      assert {:error, :no_subtitles} = OpenSubtitles.fetch(handle(plug), entry)
+      assert {:ok, :no_transcript} = OpenSubtitles.fetch(handle(plug), entry)
     end
   end
 
