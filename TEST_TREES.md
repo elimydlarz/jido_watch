@@ -94,6 +94,10 @@ System: journey (functional: test/system/journey_test.exs)
                 then form_opinion/2 is invoked once
                   when the agent polls again
                     then no callbacks fire for the entry already processed
+                    when the agent is hibernated, stopped, and a fresh agent is thawed from the same storage and rewired with runtime config
+                      then connection, watermark, and pending_watches survive unchanged
+                      when the thawed agent polls
+                        then no callbacks fire for the entry already processed
               when the most recent entry's subtitles cannot be fetched from OpenSubtitles
                 then no callbacks fire
             when there are no new entries past the watermark
