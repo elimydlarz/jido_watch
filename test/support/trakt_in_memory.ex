@@ -44,15 +44,39 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   end
 
   @impl JidoWatch.Trakt.Client
-  def recent_watches(pid, _access_token) do
+  def recent_watches(pid, access_token) do
     Agent.get_and_update(pid, fn state ->
       result =
-        case state.recent_watches_error do
-          nil -> {:ok, state.watches}
-          reason -> {:error, reason}
+        cond do
+          MapSet.member?(state.unauthorized_access_tokens, access_token) ->
+            {:error, :unauthorized}
+
+          state.recent_watches_error ->
+            {:error, state.recent_watches_error}
+
+          true ->
+            {:ok, state.watches}
         end
 
       {result, Map.update!(state, :recent_watches_calls, &(&1 + 1))}
+    end)
+  end
+
+  @impl JidoWatch.Trakt.Client
+  def exchange_refresh_token(pid, refresh_token) do
+    Agent.get_and_update(pid, fn state ->
+      case Map.fetch(state.refresh_chain, refresh_token) do
+        {:ok, new_tokens} ->
+          new_state =
+            state
+            |> Map.update!(:refresh_chain, &Map.delete(&1, refresh_token))
+            |> Map.update!(:unauthorized_access_tokens, &MapSet.delete(&1, new_tokens.access_token))
+
+          {{:ok, new_tokens}, new_state}
+
+        :error ->
+          {{:error, :invalid_grant}, state}
+      end
     end)
   end
 
