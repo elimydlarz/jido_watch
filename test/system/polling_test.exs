@@ -189,6 +189,48 @@ defmodule JidoWatch.System.PollingTest do
     end
   end
 
+  describe "when Trakt returns 401 for a request during a poll and the refresh succeeds" do
+    test "then the new tokens replace the stored pair, the original request is retried with the new access token, and the tick proceeds normally from there" do
+      old_tokens = %{access_token: "old-tok", refresh_token: "ref-1", expires_in: 7_776_000}
+      new_tokens = %{access_token: "new-tok", refresh_token: "ref-2", expires_in: 7_776_000}
+      entry = %{"id" => "ep-1"}
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{},
+          watches: [entry],
+          unauthorized_access_tokens: ["old-tok"],
+          refresh_chain: %{"ref-1" => new_tokens}
+        )
+
+      subtitles =
+        SubtitleInMemory.start!(
+          cues: %{
+            "ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "a"}]
+          }
+        )
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: 0.02,
+          connection: {:connected, old_tokens}
+        )
+
+      assert_receive {:watch_called, _}, 3_000
+
+      {:ok, %{access_token: stored_access, refresh_token: stored_refresh}} =
+        HostAgent.tokens(pid)
+
+      assert stored_access == "new-tok"
+      assert stored_refresh == "ref-2"
+    end
+  end
+
   describe "when the agent terminates" do
     test "then polling stops" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
