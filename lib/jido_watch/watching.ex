@@ -43,7 +43,6 @@ defmodule JidoWatch.Watching do
   end
 
   defp max_dt(nil, b), do: b
-  defp max_dt(a, nil), do: a
 
   defp max_dt(a, b) do
     case DateTime.compare(a, b) do
