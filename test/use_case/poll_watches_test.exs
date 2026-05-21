@@ -171,4 +171,50 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
       assert new_state.connection == :unconnected
     end
   end
+
+  describe "run/2 when the connection is {:connected, tokens} and the pipeline returns :unauthorized and the refresh returns another error" do
+    test "then plugin state is left unchanged" do
+      old_tokens = %{access_token: "old-tok", refresh_token: "old-ref", expires_in: 7_776_000}
+      subtitles = SubtitleInMemory.start!()
+      watermark = ~U[2025-06-01 00:00:00Z]
+      pending = [%{"id" => "ep-stale"}]
+
+      plugin_state =
+        base_plugin_state({RefreshFailingTrakt, :unused}, subtitles, %{
+          connection: {:connected, old_tokens},
+          watermark: watermark,
+          pending_watches: pending
+        })
+
+      agent = agent_with(plugin_state)
+
+      assert {:ok, updates} = PollWatches.run(%{}, %{agent: agent})
+
+      refute Map.has_key?(updates, :__jido_watch__)
+    end
+  end
+
+  describe "run/2 when the connection is {:connected, tokens} and the pipeline returns another error" do
+    test "then plugin state is left unchanged (watermark and pending_watches not touched)" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+      watermark = ~U[2025-06-01 00:00:00Z]
+      pending = [%{"id" => "ep-stale"}]
+
+      trakt = TraktInMemory.start!(recent_watches_error: {:trakt_status, 500, ""})
+      subtitles = SubtitleInMemory.start!()
+
+      plugin_state =
+        base_plugin_state(trakt, subtitles, %{
+          connection: {:connected, tokens},
+          watermark: watermark,
+          pending_watches: pending
+        })
+
+      agent = agent_with(plugin_state)
+
+      assert {:ok, updates} = PollWatches.run(%{}, %{agent: agent})
+
+      refute Map.has_key?(updates, :__jido_watch__)
+    end
+  end
 end
