@@ -73,7 +73,7 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
 
     case Req.get(url, [headers: headers(handle), params: params] ++ req_opts(handle)) do
       {:ok, %Req.Response{status: 200, body: %{"data" => []}}} ->
-        {:error, :no_subtitles}
+        {:ok, :no_transcript}
 
       {:ok, %Req.Response{status: 200, body: %{"data" => [first | _]}}} ->
         {:ok, get_in(first, ["attributes", "files", Access.at(0), "file_id"])}
