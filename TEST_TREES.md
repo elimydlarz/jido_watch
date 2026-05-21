@@ -195,6 +195,34 @@ Domain: Srt (src: lib/jido_watch/srt.ex; unit: test/domain/srt_test.exs)
       then the error wraps the offending block index
 ```
 
+## Port
+
+Trees here describe outbound port contracts — what every implementation, in-memory
+or real, must guarantee. The contract suite is a macro module that both the
+in-memory adapter test and the real adapter test invoke; both reify the same
+tree.
+
+### Trakt.Client
+
+```
+Port: Trakt.Client (src: lib/jido_watch/trakt/client.ex; unit: test/adapter/trakt_in_memory_test.exs; integration: test/adapter/trakt_http_test.exs)
+  exchange_code/2
+    when given a code the server accepts
+      then returns {:ok, %{access_token, refresh_token, expires_in}}
+    when given a code the server rejects
+      then returns an error
+  exchange_refresh_token/2
+    when given a refresh token the server accepts
+      then returns {:ok, %{access_token, refresh_token, expires_in}}
+    when the refresh token is expired, revoked, or otherwise invalid
+      then returns {:error, :invalid_grant}
+  recent_watches/2
+    when the access token is accepted
+      then returns {:ok, list_of_entries}
+    when the access token is rejected by the server
+      then returns {:error, :unauthorized}
+```
+
 ## Adapter
 
 Trees here describe the real driven adapters that talk to external infrastructure.
