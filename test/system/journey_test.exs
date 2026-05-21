@@ -3,6 +3,9 @@ defmodule JidoWatch.System.JourneyTest do
 
   @moduletag :journey
 
+  alias Jido.AgentServer
+  alias Jido.Persist
+  alias Jido.Storage.ETS, as: EtsStorage
   alias JidoWatch.Subtitle.OpenSubtitles
   alias JidoWatch.Test.Support.HostAgent
   alias JidoWatch.Trakt.HTTP
