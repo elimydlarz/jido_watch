@@ -23,8 +23,10 @@ defmodule JidoWatch.Actions.PollWatches do
     poll_for_connection(plugin_state.connection, plugin_state, agent)
   end
 
+  @max_attempts 3
+
   defp poll_for_connection({:connected, tokens}, plugin_state, agent) do
-    case run_pipeline(plugin_state, tokens, agent) do
+    case run_with_retry(plugin_state, tokens, agent, 1) do
       {:ok, new_watermark} ->
         {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
 
@@ -38,6 +40,21 @@ defmodule JidoWatch.Actions.PollWatches do
 
   defp poll_for_connection(:unconnected, _plugin_state, _agent), do: {:ok, %{}}
 
+  defp run_with_retry(plugin_state, tokens, agent, attempt) do
+    case run_pipeline(plugin_state, tokens, agent) do
+      {:ok, _} = ok ->
+        ok
+
+      {:error, reason} = err ->
+        if transient?(reason) and attempt < @max_attempts do
+          Process.sleep(plugin_state.transient_retry_delay_ms)
+          run_with_retry(plugin_state, tokens, agent, attempt + 1)
+        else
+          err
+        end
+    end
+  end
+
   defp refresh_and_retry(plugin_state, %{refresh_token: refresh_token}, agent) do
     {trakt_mod, trakt_handle} = plugin_state.trakt
 
@@ -45,7 +62,7 @@ defmodule JidoWatch.Actions.PollWatches do
       {:ok, new_tokens} ->
         new_plugin_state = %{plugin_state | connection: {:connected, new_tokens}}
 
-        case run_pipeline(new_plugin_state, new_tokens, agent) do
+        case run_with_retry(new_plugin_state, new_tokens, agent, 1) do
           {:ok, new_watermark} ->
             {:ok, %{__jido_watch__: %{new_plugin_state | watermark: new_watermark}}}
 
@@ -60,6 +77,10 @@ defmodule JidoWatch.Actions.PollWatches do
         {:ok, %{}}
     end
   end
+
+  defp transient?({:trakt_status, status, _}) when status >= 500, do: true
+  defp transient?(%{__exception__: true}), do: true
+  defp transient?(_), do: false
 
   defp run_pipeline(plugin_state, %{access_token: access_token}, agent) do
     Watching.run(%{
