@@ -209,8 +209,8 @@ Port: Subtitle.Source (src: lib/jido_watch/subtitle/source.ex; unit: test/adapte
   fetch/2
     when given an entry whose subtitles are available
       then returns {:ok, list_of_cues}
-    when given an entry whose subtitles are not available
-      then returns an error
+    when given an entry whose subtitles cannot be found
+      then returns {:ok, :no_transcript}
 ```
 
 The watch-entry shape is intentionally not part of the port contract — each
