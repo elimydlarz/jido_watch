@@ -20,18 +20,21 @@ defmodule JidoWatch.Actions.PollWatches do
   end
 
   defp poll_for_connection({:connected, %{access_token: access_token}}, plugin_state, agent) do
-    {:ok, new_watermark} =
-      Watching.run(%{
-        trakt: plugin_state.trakt,
-        subtitles: plugin_state.subtitles,
-        access_token: access_token,
-        host: agent.agent_module,
-        agent: agent,
-        angles: plugin_state.angles,
-        watermark: plugin_state.watermark
-      })
+    case Watching.run(%{
+           trakt: plugin_state.trakt,
+           subtitles: plugin_state.subtitles,
+           access_token: access_token,
+           host: agent.agent_module,
+           agent: agent,
+           angles: plugin_state.angles,
+           watermark: plugin_state.watermark
+         }) do
+      {:ok, new_watermark} ->
+        {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
 
-    {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
+      {:error, _} ->
+        {:ok, %{}}
+    end
   end
 
   defp poll_for_connection(:unconnected, _plugin_state, _agent), do: {:ok, %{}}
