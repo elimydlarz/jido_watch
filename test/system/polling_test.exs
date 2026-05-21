@@ -318,6 +318,50 @@ defmodule JidoWatch.System.PollingTest do
     end
   end
 
+  describe "when Trakt fails transiently for a request during a poll and all three attempts fail" do
+    test "then the agent does not crash, no callbacks fire, the watermark is not advanced, and polling continues on the next interval" do
+      tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
+      watermark = ~U[2025-06-01 12:00:00Z]
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{},
+          watches: [],
+          transient_failures_remaining: 100,
+          transient_error: {:trakt_status, 503, ""}
+        )
+
+      subtitles = SubtitleInMemory.start!(cues: %{})
+
+      interval_minutes = 0.02
+      interval_ms = round(interval_minutes * 60_000)
+
+      Process.flag(:trap_exit, true)
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          subtitles: subtitles,
+          trakt_client_id: "client",
+          trakt_client_secret: "secret",
+          test_pid: self(),
+          poll_interval_minutes: interval_minutes,
+          transient_retry_delay_ms: 10,
+          connection: {:connected, tokens},
+          watermark: watermark
+        )
+
+      Process.sleep(2 * interval_ms + 300)
+
+      assert Process.alive?(pid)
+      refute_receive {:watch_called, _}, 50
+      refute_receive {:experience_called, _, _}, 50
+      refute_receive {:form_opinion_called, _}, 50
+      assert HostAgent.watermark(pid) == watermark
+      assert TraktInMemory.recent_watches_calls(trakt) >= 6
+    end
+  end
+
   describe "when the agent terminates" do
     test "then polling stops" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
