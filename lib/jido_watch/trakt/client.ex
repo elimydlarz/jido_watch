@@ -18,6 +18,9 @@ defmodule JidoWatch.Trakt.Client do
   @callback exchange_code(handle(), code :: binary()) ::
               {:ok, tokens()} | {:error, term()}
 
+  @callback exchange_refresh_token(handle(), refresh_token :: binary()) ::
+              {:ok, tokens()} | {:error, :invalid_grant} | {:error, term()}
+
   @callback recent_watches(handle(), access_token :: binary()) ::
-              {:ok, [map()]} | {:error, term()}
+              {:ok, [map()]} | {:error, :unauthorized} | {:error, term()}
 end
