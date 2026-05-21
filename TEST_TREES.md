@@ -131,7 +131,7 @@ and a recording host fixture that implements `@behaviour JidoWatch`. No
 ### Watching
 
 ```
-Watching (use_case: test/use_case/watching_test.exs)
+Use-case: Watching (src: lib/jido_watch/watching.ex; unit: test/use_case/watching_test.exs)
   run/1
     when there are new watch entries with fetchable subtitles
       then watch/2 is called once per chunk in window order
