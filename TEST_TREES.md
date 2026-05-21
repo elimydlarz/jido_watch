@@ -145,6 +145,29 @@ Error variants (no new entries, unfetchable subtitles) are covered by the
 `watching` system tree rather than re-asserted here; their value is at the
 seam where the action meets the agent runtime, not in the pure pipeline.
 
+### PollWatches
+
+```
+Use-case: PollWatches (src: lib/jido_watch/actions/poll_watches.ex; unit: test/use_case/poll_watches_test.exs)
+  run/2
+    when the connection is :unconnected
+      then no Trakt I/O happens and plugin state is not changed
+    when the connection is {:connected, tokens} and the pipeline succeeds
+      then the new watermark and pending_watches are written to plugin state
+    when the connection is {:connected, tokens} and the pipeline returns :unauthorized
+      then a refresh is attempted with the stored refresh_token
+        when the refresh succeeds
+          then the new access_token and refresh_token replace the stored pair
+          then the pipeline is replayed with the new access_token
+          then the new watermark and pending_watches are written to plugin state
+        if the refresh returns :invalid_grant
+          then the connection flips to :unconnected
+        if the refresh returns another error
+          then plugin state is left unchanged
+    when the connection is {:connected, tokens} and the pipeline returns another error
+      then plugin state is left unchanged (watermark and pending_watches not touched)
+```
+
 ### User_setup
 
 ```
