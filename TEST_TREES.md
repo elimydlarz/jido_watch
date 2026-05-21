@@ -39,6 +39,11 @@ polling (system: test/system/polling_test.exs)
     then polls begin firing on the configured interval
   when the plugin mounts with a custom :poll_interval_minutes in plugin state
     then polls fire on that interval rather than the default
+  if Trakt errors during a poll
+    then the agent does not crash
+    then no callbacks fire for that tick
+    then the watermark is not advanced
+    then polling continues on the next interval
   when the agent terminates
     then polling stops
 ```
