@@ -55,20 +55,14 @@ System: polling (functional: test/system/polling_test.exs)
         then no further polls fire for that user
           when the user re-runs user_setup with a valid code
             then polling resumes
-  when Trakt fails transiently for a request during a poll
-    then the request is retried after a delay, up to three attempts total
-      when an attempt succeeds within those three
-        then the tick proceeds normally from there
-      if all three attempts fail
-        then the agent does not crash
-        then no callbacks fire for that tick
-        then the watermark is not advanced
-        then polling continues on the next interval
-  when the refresh call itself fails transiently and an attempt succeeds within three
-    then the tick proceeds normally from there
   when the agent terminates
     then polling stops
 ```
+
+Transient HTTP failures (5xx, 408, 429, transport errors) for Trakt requests are
+retried inside the `Trakt.HTTP` adapter via Req's `:safe_transient` policy and
+fold into the "if Trakt errors during a poll" assertions above once Req gives
+up. The use-case layer does not retry.
 
 ### journey
 
