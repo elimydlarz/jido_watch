@@ -174,7 +174,26 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
     end
   end
 
-  describe "recent_watches/2 if Trakt responds with a non-200 status" do
+  describe "recent_watches/2 if Trakt responds with 401" do
+    test "then the error is :unauthorized" do
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(401, "")
+      end
+
+      handle =
+        HTTP.new(
+          client_id: "id-abc",
+          client_secret: "secret-xyz",
+          plug: plug
+        )
+
+      assert {:error, :unauthorized} = HTTP.recent_watches(handle, "tok-1")
+    end
+  end
+
+  describe "recent_watches/2 if Trakt responds with another non-200 status" do
     test "then the error wraps the status and body" do
       plug = fn conn ->
         conn
