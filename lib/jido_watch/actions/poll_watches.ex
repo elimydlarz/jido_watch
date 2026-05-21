@@ -40,27 +40,21 @@ defmodule JidoWatch.Actions.PollWatches do
 
   defp poll_for_connection(:unconnected, _plugin_state, _agent), do: {:ok, %{}}
 
-  defp run_with_retry(plugin_state, tokens, agent, attempt) do
-    case run_pipeline(plugin_state, tokens, agent) do
-      {:ok, _} = ok ->
-        ok
-
-      {:error, reason} = err ->
-        if transient?(reason) and attempt < @max_attempts do
-          Process.sleep(plugin_state.transient_retry_delay_ms)
-          run_with_retry(plugin_state, tokens, agent, attempt + 1)
-        else
-          err
-        end
-    end
+  defp run_with_retry(plugin_state, tokens, agent) do
+    with_retry(fn -> run_pipeline(plugin_state, tokens, agent) end, plugin_state.transient_retry_delay_ms)
   end
 
   defp refresh_and_retry(plugin_state, %{refresh_token: refresh_token}, agent) do
-    case refresh_with_retry(plugin_state, refresh_token, 1) do
+    {trakt_mod, trakt_handle} = plugin_state.trakt
+
+    case with_retry(
+           fn -> trakt_mod.exchange_refresh_token(trakt_handle, refresh_token) end,
+           plugin_state.transient_retry_delay_ms
+         ) do
       {:ok, new_tokens} ->
         new_plugin_state = %{plugin_state | connection: {:connected, new_tokens}}
 
-        case run_with_retry(new_plugin_state, new_tokens, agent, 1) do
+        case run_with_retry(new_plugin_state, new_tokens, agent) do
           {:ok, new_watermark} ->
             {:ok, %{__jido_watch__: %{new_plugin_state | watermark: new_watermark}}}
 
@@ -76,17 +70,15 @@ defmodule JidoWatch.Actions.PollWatches do
     end
   end
 
-  defp refresh_with_retry(plugin_state, refresh_token, attempt) do
-    {trakt_mod, trakt_handle} = plugin_state.trakt
-
-    case trakt_mod.exchange_refresh_token(trakt_handle, refresh_token) do
+  defp with_retry(fun, delay_ms, attempt \\ 1) do
+    case fun.() do
       {:ok, _} = ok ->
         ok
 
       {:error, reason} = err ->
         if transient?(reason) and attempt < @max_attempts do
-          Process.sleep(plugin_state.transient_retry_delay_ms)
-          refresh_with_retry(plugin_state, refresh_token, attempt + 1)
+          Process.sleep(delay_ms)
+          with_retry(fun, delay_ms, attempt + 1)
         else
           err
         end
