@@ -5,6 +5,67 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
 
   alias JidoWatch.Trakt.HTTP
 
+  require JidoWatch.Test.Support.TraktClientContract
+  alias JidoWatch.Test.Support.TraktClientContract
+
+  defp setup_for(scenario) do
+    {HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug_for(scenario)),
+     scenario}
+    |> then(fn {handle, _} -> {HTTP, handle} end)
+  end
+
+  defp plug_for(:exchange_code_valid) do
+    fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(
+        200,
+        Jason.encode!(%{
+          "access_token" => "tok-x",
+          "refresh_token" => "ref-x",
+          "expires_in" => 7_776_000
+        })
+      )
+    end
+  end
+
+  defp plug_for(:exchange_code_invalid) do
+    fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+  end
+
+  defp plug_for(:refresh_valid) do
+    fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(
+        200,
+        Jason.encode!(%{
+          "access_token" => "tok-y",
+          "refresh_token" => "ref-y",
+          "expires_in" => 86_400
+        })
+      )
+    end
+  end
+
+  defp plug_for(:refresh_invalid_grant) do
+    fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+  end
+
+  defp plug_for(:recent_watches_valid) do
+    fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(200, Jason.encode!([%{"id" => 1}]))
+    end
+  end
+
+  defp plug_for(:recent_watches_unauthorized) do
+    fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+  end
+
+  TraktClientContract.run()
+
   describe "exchange_code/2 when given a valid auth code" do
     test "then it POSTs the code with client credentials and grant_type to /oauth/token and returns the parsed access_token, refresh_token and expires_in" do
       plug = fn conn ->
