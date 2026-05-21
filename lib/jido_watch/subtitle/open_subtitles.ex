@@ -46,11 +46,18 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
   @impl JidoWatch.Subtitle.Source
   def fetch(%__MODULE__{} = handle, watch_entry) do
     with {:ok, imdb_id} <- extract_imdb_id(watch_entry),
-         {:ok, file_id} <- search(handle, imdb_id),
-         {:ok, link} <- request_download(handle, file_id),
-         {:ok, srt} <- download(handle, link),
-         {:ok, cues} <- Srt.parse(srt) do
-      {:ok, cues}
+         {:ok, file_id_or_no_transcript} <- search(handle, imdb_id) do
+      case file_id_or_no_transcript do
+        :no_transcript ->
+          {:ok, :no_transcript}
+
+        file_id ->
+          with {:ok, link} <- request_download(handle, file_id),
+               {:ok, srt} <- download(handle, link),
+               {:ok, cues} <- Srt.parse(srt) do
+            {:ok, cues}
+          end
+      end
     end
   end
 
