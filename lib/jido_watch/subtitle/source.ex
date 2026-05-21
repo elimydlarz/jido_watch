@@ -11,5 +11,6 @@ defmodule JidoWatch.Subtitle.Source do
   @type handle :: term()
   @type watch_entry :: map()
 
-  @callback fetch(handle(), watch_entry()) :: {:ok, [Cue.t()]} | {:error, term()}
+  @callback fetch(handle(), watch_entry()) ::
+              {:ok, [Cue.t()]} | {:ok, :no_transcript} | {:error, term()}
 end
