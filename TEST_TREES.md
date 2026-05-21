@@ -29,7 +29,7 @@ begin on the connection transition and die with the agent. The cadence is
 configurable per agent via `:poll_interval_minutes` in plugin state.
 
 ```
-polling (system: test/system/polling_test.exs)
+System: polling (functional: test/system/polling_test.exs)
   when the plugin is mounted with no user connected
     then no polls fire
     when the user becomes connected via user_setup
