@@ -126,6 +126,52 @@ defmodule JidoWatch.System.JourneyTest do
       refute_receive {:form_opinion_called, _}, 200
 
       IO.puts("Re-poll produced no new callbacks. Journey OK.\n")
+
+      IO.puts("Verifying persistence — hibernate, stop, thaw, re-poll should remain idempotent.\n")
+
+      {:ok, server_state} = AgentServer.state(pid)
+      pre_hibernate = server_state.agent.state[:__jido_watch__]
+
+      storage = {EtsStorage, [table: :jido_watch_journey_storage]}
+      persistence_key = "journey-test-agent"
+
+      :ok = Persist.hibernate(storage, HostAgent, persistence_key, server_state.agent)
+      :ok = GenServer.stop(pid)
+
+      {:ok, restored_agent} = Persist.thaw(storage, HostAgent, persistence_key)
+      restored_slice = restored_agent.state[:__jido_watch__]
+
+      assert restored_slice.connection == pre_hibernate.connection
+      assert restored_slice.watermark == pre_hibernate.watermark
+      assert restored_slice.pending_watches == pre_hibernate.pending_watches
+
+      rewired_slice =
+        Map.merge(restored_slice, %{
+          trakt: {HTTP, trakt_handle},
+          subtitles: {OpenSubtitles, os_authed},
+          trakt_client_id: env!("TRAKT_CLIENT_ID"),
+          trakt_client_secret: env!("TRAKT_CLIENT_SECRET"),
+          angles: @angles
+        })
+
+      rewired_agent = %{
+        restored_agent
+        | state:
+            restored_agent.state
+            |> Map.put(:__jido_watch__, rewired_slice)
+            |> Map.put(:test_pid, self())
+      }
+
+      {:ok, pid2} = AgentServer.start_link(agent: rewired_agent, register_global: false)
+      on_exit(fn -> if Process.alive?(pid2), do: GenServer.stop(pid2) end)
+
+      :ok = HostAgent.poll(pid2)
+
+      refute_receive {:watch_called, _}, 5_000
+      refute_receive {:experience_called, _, _}, 200
+      refute_receive {:form_opinion_called, _}, 200
+
+      IO.puts("Thawed-agent poll produced no new callbacks. Persistence OK.\n")
     end
   end
 
