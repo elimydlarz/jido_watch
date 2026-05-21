@@ -185,6 +185,32 @@ Use-case: User_setup (src: lib/jido_watch/actions/user_setup.ex; unit: test/use_
       then last_setup_error is set to the reason Trakt returned
 ```
 
+### Persistence
+
+The plugin participates in Jido's checkpoint/thaw protocol via `on_checkpoint/2`
+and `on_restore/2`. The `connection`, `watermark`, and `pending_watches` fields
+are the per-user cursors that need to survive across restarts; everything else
+in the plugin slice is reconstituted on every boot from plugin config. The
+hibernate/thaw seam is exercised end-to-end through `Jido.Persist` against the
+in-memory `Jido.Storage.ETS` adapter — both call paths are real Jido code, but
+the storage is hermetic.
+
+```
+Use-case: Persistence (src: lib/jido_watch/plugin.ex; unit: test/use_case/persistence_test.exs)
+  when an agent is hibernated and thawed
+    then connection survives unchanged
+    then watermark survives unchanged
+    then pending_watches survives unchanged with entries in original order
+    then trakt and subtitles are taken from plugin config, not the checkpoint
+    then trakt_client_id, trakt_client_secret, and redirect_uri are taken from plugin config
+    then angles and poll_interval_minutes are taken from plugin config
+    then last_setup_url and last_setup_error are nil
+    when the agent was unconnected before hibernation
+      then connection is :unconnected
+      then watermark is nil
+      then pending_watches is empty
+```
+
 ## Domain
 
 Trees here describe pure functions over the domain types — chunking cues into
