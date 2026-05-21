@@ -32,7 +32,7 @@ defmodule JidoWatch.System.JourneyTest do
   end
 
   describe "when the user requests Trakt authorization through user_setup" do
-    test "the whole runtime lifecycle: OS login at startup, user_setup, polling new content, callbacks, re-poll idempotency" do
+    test "the whole runtime lifecycle: OS login at startup, user_setup, polling new content, callbacks, re-poll idempotency, hibernate-and-thaw preserves durable cursors" do
       trakt_handle =
         HTTP.new(
           client_id: env!("TRAKT_CLIENT_ID"),
