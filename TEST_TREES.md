@@ -207,7 +207,7 @@ authorization step in the loop via `user_setup`.
 ### Subtitle.OpenSubtitles
 
 ```
-Subtitle.OpenSubtitles (adapter: test/adapter/subtitle_open_subtitles_test.exs)
+Adapter: Subtitle.OpenSubtitles (src: lib/jido_watch/subtitle/open_subtitles.ex; integration: test/adapter/subtitle_open_subtitles_test.exs)
   fetch/2
     when the watch entry is a movie with an imdb_id
       then it searches OpenSubtitles by imdb_id with the Api-Key and User-Agent headers
