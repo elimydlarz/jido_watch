@@ -58,6 +58,7 @@ If you find yourself adding a callback the plugin calls during setup, you're cro
 - **Sequential chunks, parallel angles.** Chunk N+1 doesn't start until chunk N's `watch/2` returns. All angle `experience/3` calls run in parallel; `form_opinion/2` waits on all of them.
 - **No partial opinions.** If any callback in the pipeline returns an error, the whole watch fails — we don't deliver an opinion built from partial inputs.
 - **The plugin never sees the LLM, the system prompt, the memory backend, or the delivery channel.** If a change requires it to, the change is in the wrong place.
+- **Durable across hibernate/thaw: `connection`, `watermark`, `pending_watches`.** Only these three per-user cursors survive a `Jido.Persist` round-trip — via `on_checkpoint/2` externalizing them as the slice's pointer. Everything else in `:__jido_watch__` (adapter handles, OAuth client credentials, redirect URI, angles, poll interval, setup ephemera) is reconstituted from plugin config on every mount and on every thaw.
 
 ## Dependencies
 
