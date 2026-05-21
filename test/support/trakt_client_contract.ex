@@ -28,7 +28,7 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
 
   defmacro run do
     quote do
-      describe "exchange_code/2 when given a code the server accepts (port contract)" do
+      describe "exchange_code/2 when given a code the server accepts" do
         test "then returns {:ok, %{access_token, refresh_token, expires_in}}" do
           {mod, handle} = setup_for(:exchange_code_valid)
           assert {:ok, tokens} = mod.exchange_code(handle, "code-good")
@@ -38,14 +38,14 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
         end
       end
 
-      describe "exchange_code/2 when given a code the server rejects (port contract)" do
+      describe "exchange_code/2 when given a code the server rejects" do
         test "then returns an error" do
           {mod, handle} = setup_for(:exchange_code_invalid)
           assert {:error, _} = mod.exchange_code(handle, "code-bad")
         end
       end
 
-      describe "exchange_refresh_token/2 when given a refresh token the server accepts (port contract)" do
+      describe "exchange_refresh_token/2 when given a refresh token the server accepts" do
         test "then returns {:ok, %{access_token, refresh_token, expires_in}}" do
           {mod, handle} = setup_for(:refresh_valid)
           assert {:ok, tokens} = mod.exchange_refresh_token(handle, "ref-good")
@@ -55,14 +55,14 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
         end
       end
 
-      describe "exchange_refresh_token/2 when the refresh token is expired, revoked, or otherwise invalid (port contract)" do
+      describe "exchange_refresh_token/2 when the refresh token is expired, revoked, or otherwise invalid" do
         test "then returns {:error, :invalid_grant}" do
           {mod, handle} = setup_for(:refresh_invalid_grant)
           assert {:error, :invalid_grant} = mod.exchange_refresh_token(handle, "ref-dead")
         end
       end
 
-      describe "recent_watches/2 when the access token is accepted (port contract)" do
+      describe "recent_watches/2 when the access token is accepted" do
         test "then returns {:ok, list_of_entries}" do
           {mod, handle} = setup_for(:recent_watches_valid)
           assert {:ok, entries} = mod.recent_watches(handle, "tok-good")
@@ -70,7 +70,7 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
         end
       end
 
-      describe "recent_watches/2 when the access token is rejected by the server (port contract)" do
+      describe "recent_watches/2 when the access token is rejected by the server" do
         test "then returns {:error, :unauthorized}" do
           {mod, handle} = setup_for(:recent_watches_unauthorized)
           assert {:error, :unauthorized} = mod.recent_watches(handle, "tok-dead")
