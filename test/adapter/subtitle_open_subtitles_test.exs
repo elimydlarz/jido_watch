@@ -6,6 +6,9 @@ defmodule JidoWatch.Adapter.SubtitleOpenSubtitlesTest do
   alias JidoWatch.Subtitle.Cue
   alias JidoWatch.Subtitle.OpenSubtitles
 
+  require JidoWatch.Test.Support.SubtitleSourceContract
+  alias JidoWatch.Test.Support.SubtitleSourceContract
+
   defp handle(plug) do
     OpenSubtitles.new(
       api_key: "key-abc",
@@ -21,6 +24,24 @@ defmodule JidoWatch.Adapter.SubtitleOpenSubtitlesTest do
     Hello
     """
   end
+
+  defp setup_for(:fetch_available) do
+    entry = %{"type" => "movie", "movie" => %{"ids" => %{"imdb" => "tt1234567"}}}
+    {OpenSubtitles, handle(happy_plug(srt_body())), entry}
+  end
+
+  defp setup_for(:fetch_unavailable) do
+    plug = fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(200, Jason.encode!(%{"data" => []}))
+    end
+
+    entry = %{"type" => "movie", "movie" => %{"ids" => %{"imdb" => "tt0000000"}}}
+    {OpenSubtitles, handle(plug), entry}
+  end
+
+  SubtitleSourceContract.run()
 
   defp happy_plug(srt) do
     fn conn ->
