@@ -16,10 +16,16 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   def start!(opts \\ []) do
     codes = Keyword.get(opts, :codes, %{})
     watches = Keyword.get(opts, :watches, [])
+    recent_watches_error = Keyword.get(opts, :recent_watches_error)
 
     {:ok, pid} =
       Agent.start_link(fn ->
-        %{codes: codes, watches: watches, recent_watches_calls: 0}
+        %{
+          codes: codes,
+          watches: watches,
+          recent_watches_error: recent_watches_error,
+          recent_watches_calls: 0
+        }
       end)
 
     {__MODULE__, pid}
