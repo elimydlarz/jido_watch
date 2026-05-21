@@ -29,7 +29,6 @@ defmodule JidoWatch.Test.Support.HostAgent do
     connection = Keyword.get(opts, :connection, :unconnected)
     watermark = Keyword.get(opts, :watermark)
     poll_interval_minutes = Keyword.get(opts, :poll_interval_minutes)
-    transient_retry_delay_ms = Keyword.get(opts, :transient_retry_delay_ms)
 
     plugin_state =
       %{
@@ -42,7 +41,6 @@ defmodule JidoWatch.Test.Support.HostAgent do
         watermark: watermark
       }
       |> maybe_put(:poll_interval_minutes, poll_interval_minutes)
-      |> maybe_put(:transient_retry_delay_ms, transient_retry_delay_ms)
 
     AgentServer.start_link(
       agent: __MODULE__,
