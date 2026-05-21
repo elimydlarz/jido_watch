@@ -93,25 +93,29 @@ the LLM can call it directly.
 
 ## Configuration
 
-Pass Trakt and subtitle wiring through plugin state at agent startup:
+Pass Trakt and subtitle wiring through plugin config at the `use Jido.Agent`
+site. Plugin config is per agent module (compile-time); per-user data like
+OAuth tokens lives in plugin state and is set at runtime via `user_setup`.
 
 ```elixir
-Jido.AgentServer.start_link(
-  agent: MyApp.ViewerAgent,
-  initial_state: %{
-    __jido_watch__: %{
-      trakt: {JidoWatch.Trakt.HTTP, JidoWatch.Trakt.HTTP.new(
-        client_id: System.fetch_env!("TRAKT_CLIENT_ID"),
-        client_secret: System.fetch_env!("TRAKT_CLIENT_SECRET")
-      )},
-      subtitles: {MyApp.MySubtitleSource, my_handle},
-      trakt_client_id: System.fetch_env!("TRAKT_CLIENT_ID"),
-      trakt_client_secret: System.fetch_env!("TRAKT_CLIENT_SECRET"),
-      angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads],
-      poll_interval_minutes: 60
-    }
-  }
-)
+defmodule MyApp.ViewerAgent do
+  use Jido.Agent,
+    name: "my_viewer",
+    plugins: [
+      {JidoWatch.Plugin,
+       %{
+         trakt: {JidoWatch.Trakt.HTTP, JidoWatch.Trakt.HTTP.new(
+           client_id: System.fetch_env!("TRAKT_CLIENT_ID"),
+           client_secret: System.fetch_env!("TRAKT_CLIENT_SECRET")
+         )},
+         subtitles: {MyApp.MySubtitleSource, my_handle},
+         trakt_client_id: System.fetch_env!("TRAKT_CLIENT_ID"),
+         trakt_client_secret: System.fetch_env!("TRAKT_CLIENT_SECRET"),
+         angles: [:emerging_themes, :character_readings, :cross_show_rhymes, :loose_threads],
+         poll_interval_minutes: 60
+       }}
+    ]
+end
 ```
 
 The `:trakt` and `:subtitles` values are `{module, handle}` pairs — the
@@ -122,6 +126,30 @@ behaviours respectively. `JidoWatch.Trakt.HTTP` is the bundled real client.
 watches. Polling is gated by auth — no ticks fire until a user is connected
 via `user_setup`, at which point polls begin on the configured cadence and
 continue for the lifetime of the agent. Defaults to 60 if omitted.
+
+## Persistence
+
+The plugin participates in Jido's checkpoint/thaw protocol. Three per-user
+cursors are durable across a hibernate/thaw round-trip:
+
+- `connection` — the OAuth tokens granted by `user_setup`
+- `watermark` — the latest Trakt `watched_at` the plugin has already looked past
+- `pending_watches` — entries discovered past the watermark whose pipeline run
+  hasn't yet produced an opinion (e.g. subtitles weren't available yet)
+
+These are externalized via `on_checkpoint/2` and rehydrated via `on_restore/2`.
+Everything else in the plugin slice (adapter handles, OAuth client credentials,
+redirect URI, angles, poll interval, setup ephemera) is reseeded from plugin
+config on every mount and on every thaw — so a config change between deploys
+takes effect immediately, with no stale checkpoint values lingering.
+
+For durability across process restarts, the consuming app must configure the
+`Jido.AgentServer` with `Jido.AgentServer.Lifecycle.Keyed` and a durable
+`Jido.Storage` adapter (`Jido.Storage.File` or `Jido.Storage.Redis` — not
+`Jido.Storage.ETS`, which is ephemeral). With the default `Noop` lifecycle the
+plugin runs in memory and a restart loses all three cursors: the user must
+re-authorize, the polling watermark resets, and any unfinished retries in
+`pending_watches` are dropped.
 
 ## Default angles
 
