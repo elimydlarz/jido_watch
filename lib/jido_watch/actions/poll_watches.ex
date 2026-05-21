@@ -53,6 +53,9 @@ defmodule JidoWatch.Actions.PollWatches do
             {:ok, %{__jido_watch__: new_plugin_state}}
         end
 
+      {:error, :invalid_grant} ->
+        {:ok, %{__jido_watch__: %{plugin_state | connection: :unconnected}}}
+
       {:error, _} ->
         {:ok, %{}}
     end
