@@ -74,11 +74,20 @@ defmodule JidoWatch.Watching do
   defp watched_at(_), do: nil
 
   defp run_for_entry(entry, sub_mod, sub_handle, host, agent, angles) do
-    with {:ok, cues} <- sub_mod.fetch(sub_handle, entry),
-         chunks = Chunker.chunk_for_watch(entry, cues),
-         {:ok, experiences} <- watch_each(host, agent, chunks),
-         {:ok, impressions} <- experience_each(host, agent, experiences, angles) do
-      host.form_opinion(agent, impressions)
+    case sub_mod.fetch(sub_handle, entry) do
+      {:ok, :no_transcript} ->
+        :ok
+
+      {:ok, cues} ->
+        chunks = Chunker.chunk_for_watch(entry, cues)
+
+        with {:ok, experiences} <- watch_each(host, agent, chunks),
+             {:ok, impressions} <- experience_each(host, agent, experiences, angles) do
+          host.form_opinion(agent, impressions)
+        end
+
+      {:error, _} = err ->
+        err
     end
   end
 
