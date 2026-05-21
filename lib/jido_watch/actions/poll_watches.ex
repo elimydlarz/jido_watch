@@ -26,7 +26,7 @@ defmodule JidoWatch.Actions.PollWatches do
   @max_attempts 3
 
   defp poll_for_connection({:connected, tokens}, plugin_state, agent) do
-    case run_with_retry(plugin_state, tokens, agent, 1) do
+    case run_with_retry(plugin_state, tokens, agent) do
       {:ok, new_watermark} ->
         {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
 
