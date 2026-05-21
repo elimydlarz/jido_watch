@@ -19,9 +19,6 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
     recent_watches_error = Keyword.get(opts, :recent_watches_error)
     unauthorized = MapSet.new(Keyword.get(opts, :unauthorized_access_tokens, []))
     refresh_chain = Keyword.get(opts, :refresh_chain, %{})
-    transient_failures_remaining = Keyword.get(opts, :transient_failures_remaining, 0)
-    refresh_transient_failures_remaining = Keyword.get(opts, :refresh_transient_failures_remaining, 0)
-    transient_error = Keyword.get(opts, :transient_error, {:trakt_status, 503, ""})
 
     {:ok, pid} =
       Agent.start_link(fn ->
@@ -31,10 +28,7 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
           recent_watches_error: recent_watches_error,
           recent_watches_calls: 0,
           unauthorized_access_tokens: unauthorized,
-          refresh_chain: refresh_chain,
-          transient_failures_remaining: transient_failures_remaining,
-          refresh_transient_failures_remaining: refresh_transient_failures_remaining,
-          transient_error: transient_error
+          refresh_chain: refresh_chain
         }
       end)
 
