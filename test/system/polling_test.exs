@@ -309,7 +309,7 @@ defmodule JidoWatch.System.PollingTest do
           trakt_client_id: "client",
           trakt_client_secret: "secret",
           test_pid: self(),
-          poll_interval_minutes: 0.5,
+          poll_interval_minutes: 0.02,
           transient_retry_delay_ms: 10,
           connection: {:connected, tokens}
         )
