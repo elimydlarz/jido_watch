@@ -75,17 +75,27 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   @impl JidoWatch.Trakt.Client
   def exchange_refresh_token(pid, refresh_token) do
     Agent.get_and_update(pid, fn state ->
-      case Map.fetch(state.refresh_chain, refresh_token) do
-        {:ok, new_tokens} ->
-          new_state =
-            state
-            |> Map.update!(:refresh_chain, &Map.delete(&1, refresh_token))
-            |> Map.update!(:unauthorized_access_tokens, &MapSet.delete(&1, new_tokens.access_token))
+      cond do
+        state.refresh_transient_failures_remaining > 0 ->
+          {{:error, state.transient_error},
+           Map.update!(state, :refresh_transient_failures_remaining, &(&1 - 1))}
 
-          {{:ok, new_tokens}, new_state}
+        true ->
+          case Map.fetch(state.refresh_chain, refresh_token) do
+            {:ok, new_tokens} ->
+              new_state =
+                state
+                |> Map.update!(:refresh_chain, &Map.delete(&1, refresh_token))
+                |> Map.update!(
+                  :unauthorized_access_tokens,
+                  &MapSet.delete(&1, new_tokens.access_token)
+                )
 
-        :error ->
-          {{:error, :invalid_grant}, state}
+              {{:ok, new_tokens}, new_state}
+
+            :error ->
+              {{:error, :invalid_grant}, state}
+          end
       end
     end)
   end
