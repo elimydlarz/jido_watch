@@ -25,12 +25,16 @@ defmodule JidoWatch.Watching do
         angles: angles
       } = opts) do
     watermark = Map.get(opts, :watermark)
-    {:ok, entries} = trakt_mod.recent_watches(trakt_handle, access_token)
 
-    attempted = Enum.filter(entries, &past_watermark?(&1, watermark))
-    Enum.each(attempted, &run_for_entry(&1, sub_mod, sub_handle, host, agent, angles))
+    case trakt_mod.recent_watches(trakt_handle, access_token) do
+      {:ok, entries} ->
+        attempted = Enum.filter(entries, &past_watermark?(&1, watermark))
+        Enum.each(attempted, &run_for_entry(&1, sub_mod, sub_handle, host, agent, angles))
+        {:ok, advance_watermark(watermark, attempted)}
 
-    {:ok, advance_watermark(watermark, attempted)}
+      {:error, _} = err ->
+        err
+    end
   end
 
   defp advance_watermark(watermark, attempted) do
