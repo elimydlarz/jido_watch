@@ -27,8 +27,8 @@ defmodule JidoWatch.Actions.PollWatches do
 
   defp poll_for_connection({:connected, tokens}, plugin_state, agent) do
     case run_pipeline(plugin_state, tokens, agent) do
-      {:ok, new_watermark} ->
-        {:ok, %{__jido_watch__: %{plugin_state | watermark: new_watermark}}}
+      {:ok, updates} ->
+        {:ok, %{__jido_watch__: Map.merge(plugin_state, updates)}}
 
       {:error, :unauthorized} ->
         refresh_and_replay(plugin_state, tokens, agent)
@@ -48,8 +48,8 @@ defmodule JidoWatch.Actions.PollWatches do
         new_plugin_state = %{plugin_state | connection: {:connected, new_tokens}}
 
         case run_pipeline(new_plugin_state, new_tokens, agent) do
-          {:ok, new_watermark} ->
-            {:ok, %{__jido_watch__: %{new_plugin_state | watermark: new_watermark}}}
+          {:ok, updates} ->
+            {:ok, %{__jido_watch__: Map.merge(new_plugin_state, updates)}}
 
           {:error, _} ->
             {:ok, %{__jido_watch__: new_plugin_state}}
@@ -71,7 +71,8 @@ defmodule JidoWatch.Actions.PollWatches do
       host: agent.agent_module,
       agent: agent,
       angles: plugin_state.angles,
-      watermark: plugin_state.watermark
+      watermark: plugin_state.watermark,
+      pending_watches: plugin_state.pending_watches
     })
   end
 end
