@@ -166,12 +166,19 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
   describe "run/2 when the connection is {:connected, tokens} and the pipeline returns :unauthorized and the refresh returns another error" do
     test "then plugin state is left unchanged" do
       old_tokens = %{access_token: "old-tok", refresh_token: "old-ref", expires_in: 7_776_000}
+
+      trakt =
+        TraktInMemory.start!(
+          unauthorized_access_tokens: ["old-tok"],
+          exchange_refresh_token_error: :network_down
+        )
+
       subtitles = SubtitleInMemory.start!()
       watermark = ~U[2025-06-01 00:00:00Z]
       pending = [%{"id" => "ep-stale"}]
 
       plugin_state =
-        base_plugin_state({RefreshFailingTrakt, :unused}, subtitles, %{
+        base_plugin_state(trakt, subtitles, %{
           connection: {:connected, old_tokens},
           watermark: watermark,
           pending_watches: pending
