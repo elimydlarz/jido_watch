@@ -131,6 +131,8 @@ Use-case: Watching (src: lib/jido_watch/watching.ex; unit: test/use_case/watchin
       then watch/2 is called once per chunk in window order
     when an entry's watched_at is no later than the watermark
       then it is skipped
+    when an entry has no transcript available
+      then no callbacks fire for it but the watermark still advances past it
     then the returned watermark is the maximum of the input watermark and every attempted entry's watched_at
 ```
 
