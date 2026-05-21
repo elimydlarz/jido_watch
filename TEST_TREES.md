@@ -147,7 +147,7 @@ seam where the action meets the agent runtime, not in the pure pipeline.
 ### User_setup
 
 ```
-User_setup (use_case: test/use_case/user_setup_test.exs)
+Use-case: User_setup (src: lib/jido_watch/actions/user_setup.ex; unit: test/use_case/user_setup_test.exs)
   run/2
     when called with no code
       then last_setup_url is set to a Trakt authorize URL carrying the client_id and redirect_uri
