@@ -42,7 +42,13 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   @impl JidoWatch.Trakt.Client
   def recent_watches(pid, _access_token) do
     Agent.get_and_update(pid, fn state ->
-      {{:ok, state.watches}, Map.update!(state, :recent_watches_calls, &(&1 + 1))}
+      result =
+        case state.recent_watches_error do
+          nil -> {:ok, state.watches}
+          reason -> {:error, reason}
+        end
+
+      {result, Map.update!(state, :recent_watches_calls, &(&1 + 1))}
     end)
   end
 
