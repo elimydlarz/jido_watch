@@ -101,6 +101,6 @@ defmodule JidoWatch.Trakt.HTTP do
     }
   end
 
-  defp req_opts(%__MODULE__{plug: nil}), do: []
-  defp req_opts(%__MODULE__{plug: plug}), do: [plug: plug]
+  defp req_opts(%__MODULE__{plug: nil}), do: [retry: :safe_transient]
+  defp req_opts(%__MODULE__{plug: plug}), do: [retry: :safe_transient, plug: plug]
 end
