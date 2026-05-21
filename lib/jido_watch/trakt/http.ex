@@ -35,12 +35,32 @@ defmodule JidoWatch.Trakt.HTTP do
 
     case Req.post(handle.base_url <> "/oauth/token", [json: body] ++ req_opts(handle)) do
       {:ok, %Req.Response{status: 200, body: body}} ->
-        {:ok,
-         %{
-           access_token: Map.fetch!(body, "access_token"),
-           refresh_token: Map.fetch!(body, "refresh_token"),
-           expires_in: Map.fetch!(body, "expires_in")
-         }}
+        {:ok, parse_tokens(body)}
+
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:error, {:trakt_status, status, body}}
+
+      {:error, exception} ->
+        {:error, exception}
+    end
+  end
+
+  @impl JidoWatch.Trakt.Client
+  def exchange_refresh_token(%__MODULE__{} = handle, refresh_token) do
+    body = %{
+      refresh_token: refresh_token,
+      client_id: handle.client_id,
+      client_secret: handle.client_secret,
+      redirect_uri: handle.redirect_uri,
+      grant_type: "refresh_token"
+    }
+
+    case Req.post(handle.base_url <> "/oauth/token", [json: body] ++ req_opts(handle)) do
+      {:ok, %Req.Response{status: 200, body: body}} ->
+        {:ok, parse_tokens(body)}
+
+      {:ok, %Req.Response{status: status}} when status in [400, 401] ->
+        {:error, :invalid_grant}
 
       {:ok, %Req.Response{status: status, body: body}} ->
         {:error, {:trakt_status, status, body}}
@@ -62,12 +82,23 @@ defmodule JidoWatch.Trakt.HTTP do
       {:ok, %Req.Response{status: 200, body: entries}} when is_list(entries) ->
         {:ok, entries}
 
+      {:ok, %Req.Response{status: 401}} ->
+        {:error, :unauthorized}
+
       {:ok, %Req.Response{status: status, body: body}} ->
         {:error, {:trakt_status, status, body}}
 
       {:error, exception} ->
         {:error, exception}
     end
+  end
+
+  defp parse_tokens(body) do
+    %{
+      access_token: Map.fetch!(body, "access_token"),
+      refresh_token: Map.fetch!(body, "refresh_token"),
+      expires_in: Map.fetch!(body, "expires_in")
+    }
   end
 
   defp req_opts(%__MODULE__{plug: nil}), do: []
