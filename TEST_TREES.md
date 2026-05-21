@@ -109,7 +109,7 @@ System: journey (functional: test/system/journey_test.exs)
 ### user_setup
 
 ```
-user_setup (system: test/system/user_setup_test.exs)
+System: user_setup (functional: test/system/user_setup_test.exs)
   when the agent calls the user_setup action for an unconnected user
     then an authorization URL is returned
   when called with a valid auth code for that user
