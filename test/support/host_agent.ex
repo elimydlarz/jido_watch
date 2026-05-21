@@ -86,6 +86,15 @@ defmodule JidoWatch.Test.Support.HostAgent do
     end
   end
 
+  def tokens(pid) do
+    {:ok, state} = AgentServer.state(pid)
+
+    case state.agent.state[:__jido_watch__].connection do
+      {:connected, tokens} -> {:ok, tokens}
+      _ -> {:error, :not_connected}
+    end
+  end
+
   def watermark(pid) do
     {:ok, state} = AgentServer.state(pid)
     state.agent.state[:__jido_watch__].watermark
