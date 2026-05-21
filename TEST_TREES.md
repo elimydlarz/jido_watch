@@ -239,10 +239,20 @@ Trakt.HTTP (adapter: test/adapter/trakt_http_test.exs)
         and returns the parsed access_token, refresh_token and expires_in
     if Trakt responds with a non-200 status
       then the error wraps the status and body
+  exchange_refresh_token/2
+    when given a refresh token Trakt accepts
+      then it POSTs the refresh_token with client credentials and grant_type=refresh_token to /oauth/token
+        and returns the parsed access_token, refresh_token and expires_in
+    if Trakt responds with 400 or 401
+      then the error is :invalid_grant
+    if Trakt responds with another non-200 status
+      then the error wraps the status and body
   recent_watches/2
     when given a valid access token
       then it GETs /sync/history with bearer auth, trakt-api-version and trakt-api-key headers
         and returns the parsed list of entries
-    if Trakt responds with a non-200 status
+    if Trakt responds with 401
+      then the error is :unauthorized
+    if Trakt responds with another non-200 status
       then the error wraps the status and body
 ```
