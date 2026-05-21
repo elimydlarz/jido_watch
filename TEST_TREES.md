@@ -132,7 +132,12 @@ Use-case: Watching (src: lib/jido_watch/watching.ex; unit: test/use_case/watchin
     when an entry's watched_at is no later than the watermark
       then it is skipped
     when an entry has no transcript available
-      then no callbacks fire for it but the watermark still advances past it
+      then no callbacks fire for it, the watermark still advances past it,
+        and it stays on pending_watches for the next tick
+    when an entry is already on pending_watches and its transcript is now available
+      then it is processed and removed from pending_watches
+    when a Trakt entry is already on pending_watches
+      then it is not added again
     then the returned watermark is the maximum of the input watermark and every attempted entry's watched_at
 ```
 
