@@ -87,7 +87,7 @@ If anything is missing, the test fails fast with a message naming the variable;
 no fallbacks.
 
 ```
-journey (system: test/system/journey_test.exs)
+System: journey (functional: test/system/journey_test.exs)
   when the user requests Trakt authorization through user_setup
     then an authorization URL is returned
       when the user authorizes on Trakt and submits the resulting code through user_setup
