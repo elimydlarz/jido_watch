@@ -169,7 +169,7 @@ attention windows. No collaborators, no I/O.
 ### Chunker
 
 ```
-Chunker (domain: test/domain/chunker_test.exs)
+Domain: Chunker (src: lib/jido_watch/chunker.ex; unit: test/domain/chunker_test.exs)
   chunk_for_watch/2
     then a cue is placed in the chunk whose 10-minute window contains its start_ms
     then cues falling in the same window appear in the same chunk
