@@ -255,7 +255,7 @@ Adapter: Subtitle.OpenSubtitles (src: lib/jido_watch/subtitle/open_subtitles.ex;
     when the handle carries a bearer_token
       then /download is sent with Authorization: Bearer <token>
     if the search returns no subtitles
-      then the error is :no_subtitles
+      then the result is {:ok, :no_transcript}
     if /subtitles responds non-200
       then the error wraps the status and body
     if /download responds non-200
