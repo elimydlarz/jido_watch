@@ -17,8 +17,8 @@
 # Auth:
 #   - Uses HEX_API_KEY if set; otherwise SUSU_HEX_PUBLISHER. Refuses to
 #     fall back to OTP (so non-interactive publishes do not get prompted).
-#   - Runs `mix hex.user whoami --organization susu` to verify the key
-#     belongs to a member of the susu org before touching anything.
+#     The key may be either a user key for an account that belongs to the
+#     susu org, or a susu organisation key.
 #   - Isolates HEX_HOME so a cached oauth_token in ~/.hex/hex.config
 #     cannot take precedence over the API key.
 #
@@ -28,8 +28,6 @@
 #                               diff mix.exs, then rolls back on EXIT.
 #   PUBLISH_HEX_PUBLISH_CMD   — override the publish command
 #                               (default: mix hex.publish --yes).
-#   PUBLISH_HEX_WHOAMI_CMD    — override the auth check command
-#                               (default: mix hex.user whoami --organization susu).
 #   PUBLISH_SKIP_PUSH=1       — commit + tag locally but do not push.
 
 set -Eeuo pipefail
