@@ -38,7 +38,7 @@ Initial public release on Hex (`susu` organisation).
   port; in-memory twin used by the default test layer.
 - `JidoWatch.Subtitle.Source` + `JidoWatch.Subtitle.OpenSubtitles` — subtitle
   fetching with the same port/twin shape.
-- `JidoWatch.SRT` — SRT parser feeding `JidoWatch.Subtitle.Cue` into the
+- `JidoWatch.Srt` — SRT parser feeding `JidoWatch.Subtitle.Cue` into the
   chunker.
 
 ### Domain
