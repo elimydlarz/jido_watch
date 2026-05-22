@@ -68,6 +68,7 @@ defmodule JidoWatch.MixProject do
 
   defp package do
     [
+      organization: "susu",
       maintainers: ["susu-eng"],
       licenses: ["MIT"],
       links: %{
