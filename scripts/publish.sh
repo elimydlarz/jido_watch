@@ -53,12 +53,6 @@ if [[ -z "${DRY_RUN:-}" ]]; then
   HEX_HOME="$(mktemp -d "${TMPDIR:-/tmp}/hex-home.XXXXXX")"
   export HEX_HOME
   trap 'rm -rf "$HEX_HOME"' EXIT
-
-  whoami_cmd="${PUBLISH_HEX_WHOAMI_CMD:-mix hex.user whoami --organization susu}"
-  if ! (cd "$project_root" && $whoami_cmd) </dev/null >/dev/null 2>&1; then
-    echo "Error: Hex rejected the API key for the susu organisation (whoami failed). Regenerate via 'mix hex.user key generate --key-name susu-publish' from an account that belongs to susu, then re-export SUSU_HEX_PUBLISHER." >&2
-    exit 1
-  fi
 fi
 
 read_version() {
