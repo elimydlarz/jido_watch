@@ -17,10 +17,18 @@ See [`VISION.md`](VISION.md) for the product framing,
 
 ## Installation
 
+`:jido_watch` is published under the `susu` Hex organization. Authenticate once:
+
+```sh
+mix hex.organization auth susu
+```
+
+Then add the dep:
+
 ```elixir
 def deps do
   [
-    {:jido_watch, "~> 0.1"}
+    {:jido_watch, "~> 1.0", organization: "susu"}
   ]
 end
 ```
