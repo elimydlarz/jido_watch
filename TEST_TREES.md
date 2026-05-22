@@ -187,6 +187,8 @@ Use-case: User_setup (src: lib/jido_watch/actions/user_setup.ex; unit: test/use_
     if Trakt rejects the code
       then connection stays :unconnected
       then last_setup_error is set to the reason Trakt returned
+    when called with a ReAct-style context (agent state under :state, no :agent key)
+      then plugin state is read from state[:__jido_watch__] and the same result returns
 ```
 
 ### Persistence

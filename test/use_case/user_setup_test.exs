@@ -114,4 +114,19 @@ defmodule JidoWatch.UseCase.UserSetupTest do
       assert new_state.last_setup_error == :invalid_code
     end
   end
+
+  describe "run/2 when called with a ReAct-style context (agent state under :state, no :agent key)" do
+    test "then plugin state is read from state[:__jido_watch__] and the same result returns" do
+      trakt = TraktInMemory.start!()
+      plugin_state = base_plugin_state(trakt)
+
+      react_context = %{state: %{__jido_watch__: plugin_state}}
+
+      assert {:ok, %{__jido_watch__: new_state}} = UserSetup.run(%{}, react_context)
+
+      assert new_state.last_setup_url =~ "https://trakt.tv/oauth/authorize?"
+      assert new_state.last_setup_url =~ "client_id=client-abc"
+      assert new_state.connection == :unconnected
+    end
+  end
 end

@@ -20,6 +20,10 @@ defmodule JidoWatch.Actions.UserSetup do
     run_for_params(params, plugin_state)
   end
 
+  def run(params, %{state: %{__jido_watch__: plugin_state}}) do
+    run_for_params(params, plugin_state)
+  end
+
   defp run_for_params(%{code: code}, plugin_state) when is_binary(code) do
     {module, handle} = plugin_state.trakt
 
