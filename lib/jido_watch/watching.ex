@@ -32,7 +32,7 @@ defmodule JidoWatch.Watching do
   @type result :: %{
           watermark: DateTime.t() | nil,
           pending_watches: [entry],
-          optional(:subtitles) => {module(), term()}
+          subtitles: {module(), term()} | nil
         }
 
   @spec run(map()) :: {:ok, result()} | {:error, term()}
