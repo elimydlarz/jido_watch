@@ -6,13 +6,20 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
 
   Construct with `new/1` and pair the returned struct with this module in
   plugin state as `{JidoWatch.Subtitle.OpenSubtitles, handle}`.
+
+  When `username` and `password` are provided on the handle, a 401 on
+  `/download` triggers an automatic re-login, bearer persistence via
+  `JidoWatch.SetupPersistence`, and a single retry. The re-authed handle is
+  returned as `{:ok, cues, new_handle}` so callers can thread it into
+  plugin state.
   """
 
   @behaviour JidoWatch.Subtitle.Source
 
+  alias JidoWatch.SetupPersistence
   alias JidoWatch.Srt
 
-  defstruct [:api_key, :user_agent, :base_url, :bearer_token, :plug]
+  defstruct [:api_key, :user_agent, :base_url, :bearer_token, :plug, :username, :password, :setup_file]
 
   @default_base_url "https://api.opensubtitles.com/api/v1"
 
@@ -22,7 +29,10 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
       user_agent: Keyword.fetch!(opts, :user_agent),
       base_url: Keyword.get(opts, :base_url, @default_base_url),
       bearer_token: Keyword.get(opts, :bearer_token),
-      plug: Keyword.get(opts, :plug)
+      plug: Keyword.get(opts, :plug),
+      username: Keyword.get(opts, :username),
+      password: Keyword.get(opts, :password),
+      setup_file: Keyword.get(opts, :setup_file)
     }
   end
 
@@ -48,18 +58,62 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
     with {:ok, imdb_id} <- extract_imdb_id(watch_entry),
          {:ok, file_id_or_no_transcript} <- search(handle, imdb_id) do
       case file_id_or_no_transcript do
-        :no_transcript ->
-          {:ok, :no_transcript}
-
-        file_id ->
-          with {:ok, link} <- request_download(handle, file_id),
-               {:ok, srt} <- download(handle, link),
-               {:ok, cues} <- Srt.parse(srt) do
-            {:ok, cues}
-          end
+        :no_transcript -> {:ok, :no_transcript}
+        file_id -> fetch_cues(handle, file_id)
       end
     end
   end
+
+  # -- fetch pipeline --------------------------------------------------------
+
+  defp fetch_cues(handle, file_id) do
+    case request_download(handle, file_id) do
+      {:ok, link} ->
+        with {:ok, srt} <- download(link),
+             {:ok, cues} <- Srt.parse(srt) do
+          {:ok, cues}
+        end
+
+      {:error, {:opensubtitles_status, 401, _}} ->
+        try_renew_and_retry(handle, file_id)
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
+  defp try_renew_and_retry(%{username: username, password: password} = handle, file_id)
+       when is_binary(username) and is_binary(password) do
+    case login(handle, username, password) do
+      {:ok, bearer} ->
+        new_handle = %{handle | bearer_token: bearer}
+        _ = persist_bearer(handle, bearer)
+
+        case request_download(new_handle, file_id) do
+          {:ok, link} ->
+            with {:ok, srt} <- download(link),
+                 {:ok, cues} <- Srt.parse(srt) do
+              {:ok, cues, new_handle}
+            end
+
+          {:error, _} = err ->
+            err
+        end
+
+      {:error, _} = err ->
+        err
+    end
+  end
+
+  defp try_renew_and_retry(_handle, _file_id), do: {:error, :unauthorized}
+
+  defp persist_bearer(%{setup_file: path}, bearer) when is_binary(path) do
+    SetupPersistence.write_bearer(bearer)
+  end
+
+  defp persist_bearer(_handle, _bearer), do: :ok
+
+  # -- API primitives --------------------------------------------------------
 
   defp extract_imdb_id(%{"type" => "movie", "movie" => %{"ids" => %{"imdb" => id}}}),
     do: {:ok, id}
@@ -103,8 +157,8 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
     end
   end
 
-  defp download(handle, link) do
-    case Req.get(link, req_opts(handle)) do
+  defp download(link) do
+    case Req.get(link) do
       {:ok, %Req.Response{status: 200, body: body}} when is_binary(body) ->
         {:ok, body}
 
