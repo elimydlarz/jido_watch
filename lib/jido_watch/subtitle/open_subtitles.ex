@@ -69,7 +69,7 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
   defp fetch_cues(handle, file_id) do
     case request_download(handle, file_id) do
       {:ok, link} ->
-        with {:ok, srt} <- download(link),
+        with {:ok, srt} <- download(handle, link),
              {:ok, cues} <- Srt.parse(srt) do
           {:ok, cues}
         end
