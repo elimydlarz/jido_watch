@@ -14,7 +14,17 @@ Canonical terms used in code, tests, and docs — and what they specifically mea
 
 The boundary between the plugin (mechanism) and the consuming agent (inference and conversation) — what's where and why.
 
-**Setup is split between two principals.** The *operator* configures static credentials in `.env` once (Trakt client id/secret, OpenSubtitles api key/username/password/user_agent); the consuming app reads these at startup and obtains its runtime tokens programmatically (e.g. OpenSubtitles bearer via `OpenSubtitles.login/3`). The *user* authorizes Trakt at runtime through the `user_setup` action — the LLM offers a URL, the user authorizes, the LLM exchanges the resulting code. The package ships exactly one entry point for each: `user_setup` for the user-driven half; static config + at-startup login for the operator-driven half. No mix commands wrap user-side OAuth.
+**Setup is split between two principals.** The *operator* runs `mix jido_watch.setup` once to validate Trakt + OpenSubtitles credentials and persist an OpenSubtitles bearer token to `~/.jido_watch/setup.json`. The *user* authorizes Trakt at runtime through the `user_setup` action — the LLM offers a URL, the user authorizes, the LLM exchanges the resulting code. The package ships exactly one entry point for each: `mix jido_watch.setup` for the operator-driven half; `user_setup` for the user-driven half. The consuming app never calls `OpenSubtitles.login/3` directly — the plugin reads the persisted bearer at mount/restore, and the adapter re-logins on 401 using credentials stored on its handle.
+
+**Consuming apps configure adapters as primitives, not handles.** Since plugin config is read at compile time by `Jido.Plugin` (before adapter modules are loaded), consuming apps pass module atoms and credential strings rather than `{module, handle}` tuples:
+
+    trakt_adapter: JidoWatch.Trakt.HTTP,
+    trakt_client_id: "...", trakt_client_secret: "...",
+    subtitle_adapter: JidoWatch.Subtitle.OpenSubtitles,
+    opensubtitles_api_key: "...", opensubtitles_user_agent: "...",
+    opensubtitles_username: "...", opensubtitles_password: "..."
+
+The plugin constructs the adapter handle at mount time via `module.new/1`, reads the persisted bearer from `JidoWatch.SetupPersistence`, and stores `username`/`password` on the handle so the adapter can re-login on 401 without operator involvement. Tests still pass pre-built `{module, handle}` tuples — the plugin detects them and uses them as-is.
 
 ## Invariants
 
