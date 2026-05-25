@@ -64,15 +64,23 @@ defmodule JidoWatch.Actions.PollWatches do
   end
 
   defp run_pipeline(plugin_state, %{access_token: access_token}, agent) do
-    Watching.run(%{
-      trakt: plugin_state.trakt,
-      subtitles: plugin_state.subtitles,
-      access_token: access_token,
-      host: agent.agent_module,
-      agent: agent,
-      angles: plugin_state.angles,
-      watermark: plugin_state.watermark,
-      pending_watches: plugin_state.pending_watches
-    })
+    case Watching.run(%{
+           trakt: plugin_state.trakt,
+           subtitles: plugin_state.subtitles,
+           access_token: access_token,
+           host: agent.agent_module,
+           agent: agent,
+           angles: plugin_state.angles,
+           watermark: plugin_state.watermark,
+           pending_watches: plugin_state.pending_watches
+         }) do
+      {:ok, %{watermark: wm, pending_watches: pw} = result} ->
+        updates = %{watermark: wm, pending_watches: pw}
+        updates = if result[:subtitles], do: Map.put(updates, :subtitles, result.subtitles), else: updates
+        {:ok, updates}
+
+      {:error, _} = err ->
+        err
+    end
   end
 end
