@@ -107,8 +107,10 @@ defmodule JidoWatch.Plugin do
 
   defp build_trakt(config) do
     mod = Map.get(config, :trakt_adapter)
+    client_id = config[:trakt_client_id]
+    secret = config[:trakt_client_secret]
 
-    if mod && (client_id = config[:trakt_client_id]) && (secret = config[:trakt_client_secret]) do
+    if mod && client_id && secret do
       {mod, mod.new(client_id: client_id, client_secret: secret)}
     end
   end
@@ -117,9 +119,10 @@ defmodule JidoWatch.Plugin do
 
   defp build_subtitles(config) do
     mod = Map.get(config, :subtitle_adapter)
+    api_key = config[:opensubtitles_api_key]
+    user_agent = config[:opensubtitles_user_agent]
 
-    if mod && (api_key = config[:opensubtitles_api_key]) &&
-         (user_agent = config[:opensubtitles_user_agent]) do
+    if mod && api_key && user_agent do
       {:ok, setup} = SetupPersistence.read()
 
       handle =
