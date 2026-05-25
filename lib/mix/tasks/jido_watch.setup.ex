@@ -45,8 +45,6 @@ defmodule Mix.Tasks.JidoWatch.Setup do
 
   @shortdoc "One-time operator setup: validate Trakt+OpenSubtitles creds and persist a bearer token"
   def run(_args) do
-    Mix.Task.run("app.start")
-
     env = load_dotenv()
     validate!(env)
     bearer = login_opensubtitles!(env)
