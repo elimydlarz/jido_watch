@@ -104,7 +104,7 @@ defmodule Mix.Tasks.JidoWatch.OperatorSetup do
 
           #{Enum.join(missing, "\n    ")}
 
-      Set them and re-run: mix jido_watch.setup
+      Set them and re-run: mix jido_watch.operator_setup
       """)
 
       exit({:shutdown, 1})
