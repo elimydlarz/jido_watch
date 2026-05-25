@@ -34,7 +34,6 @@ defmodule JidoWatch.Plugin do
   alias JidoWatch.Actions.UserSetup
   alias JidoWatch.Poller
   alias JidoWatch.SetupPersistence
-  alias JidoWatch.Subtitle.OpenSubtitles
 
   use Jido.Plugin,
     name: "jido_watch",
