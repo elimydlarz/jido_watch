@@ -29,7 +29,11 @@ defmodule JidoWatch.Watching do
   alias JidoWatch.Chunker
 
   @type entry :: map()
-  @type result :: %{watermark: DateTime.t() | nil, pending_watches: [entry]}
+  @type result :: %{
+          watermark: DateTime.t() | nil,
+          pending_watches: [entry],
+          optional(:subtitles) => {module(), term()}
+        }
 
   @spec run(map()) :: {:ok, result()} | {:error, term()}
   def run(%{
@@ -48,13 +52,28 @@ defmodule JidoWatch.Watching do
         fresh = Enum.filter(entries, &past_watermark?(&1, watermark))
         next_pending = merge_pending(pending, fresh)
 
-        remaining =
-          Enum.reject(next_pending, fn entry ->
-            processed?(entry, subtitles, host, agent, angles)
+        {remaining, updated_subtitles} =
+          Enum.reduce(next_pending, {[], subtitles}, fn entry, {acc, cur_sub} ->
+            case process_entry(entry, cur_sub, host, agent, angles) do
+              :drop -> {acc, cur_sub}
+              {:drop, new_sub} -> {acc, new_sub}
+              :keep -> {acc ++ [entry], cur_sub}
+              {:keep, new_sub} -> {acc ++ [entry], new_sub}
+            end
           end)
 
         new_watermark = advance_watermark(watermark, fresh)
-        {:ok, %{watermark: new_watermark, pending_watches: remaining}}
+
+        result = %{watermark: new_watermark, pending_watches: remaining}
+
+        result =
+          if updated_subtitles != subtitles do
+            Map.put(result, :subtitles, updated_subtitles)
+          else
+            result
+          end
+
+        {:ok, result}
 
       {:error, _} = err ->
         err
@@ -69,24 +88,32 @@ defmodule JidoWatch.Watching do
 
   defp entry_id(%{"id" => id}), do: id
 
-  defp processed?(entry, {sub_mod, sub_handle}, host, agent, angles) do
+  defp process_entry(entry, {sub_mod, sub_handle}, host, agent, angles) do
     case sub_mod.fetch(sub_handle, entry) do
       {:ok, :no_transcript} ->
-        false
+        :keep
 
       {:ok, cues} ->
-        chunks = Chunker.chunk_for_watch(entry, cues)
+        if successful_pipeline?(entry, cues, host, agent, angles), do: :drop, else: :keep
 
-        with {:ok, experiences} <- watch_each(host, agent, chunks),
-             {:ok, impressions} <- experience_each(host, agent, experiences, angles),
-             :ok <- host.form_opinion(agent, impressions) do
-          true
-        else
-          _ -> false
-        end
+      {:ok, cues, new_handle} ->
+        tag = if successful_pipeline?(entry, cues, host, agent, angles), do: :drop, else: :keep
+        {tag, {sub_mod, new_handle}}
 
       {:error, _} ->
-        false
+        :keep
+    end
+  end
+
+  defp successful_pipeline?(entry, cues, host, agent, angles) do
+    chunks = Chunker.chunk_for_watch(entry, cues)
+
+    with {:ok, experiences} <- watch_each(host, agent, chunks),
+         {:ok, impressions} <- experience_each(host, agent, experiences, angles),
+         :ok <- host.form_opinion(agent, impressions) do
+      true
+    else
+      _ -> false
     end
   end
 
