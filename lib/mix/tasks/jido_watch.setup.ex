@@ -45,6 +45,8 @@ defmodule Mix.Tasks.JidoWatch.Setup do
 
   @shortdoc "One-time operator setup: validate Trakt+OpenSubtitles creds and persist a bearer token"
   def run(_args) do
+    Application.ensure_all_started(:req)
+
     env = load_dotenv()
     validate!(env)
     bearer = login_opensubtitles!(env)
