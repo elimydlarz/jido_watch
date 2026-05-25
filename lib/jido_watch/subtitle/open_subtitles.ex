@@ -157,8 +157,8 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
     end
   end
 
-  defp download(link) do
-    case Req.get(link) do
+  defp download(handle, link) do
+    case Req.get(link, req_opts(handle)) do
       {:ok, %Req.Response{status: 200, body: body}} when is_binary(body) ->
         {:ok, body}
 
