@@ -8,7 +8,7 @@ How real-world entities (a watch, a transcript chunk, an experience, an impressi
 
 ## Ubiquitous Language
 
-Canonical terms used in code, tests, and docs — and what they specifically mean here (`watch`, `chunk`, `experience`, `impression`, `opinion`, `user_setup`, `host agent`, `consuming agent`, `operator`, `user`).
+Canonical terms used in code, tests, and docs — and what they specifically mean here (`watch`, `chunk`, `experience`, `impression`, `opinion`, `viewing profile`, `user_setup`, `host agent`, `consuming agent`, `operator`, `user`).
 
 ## Bounded Contexts
 
