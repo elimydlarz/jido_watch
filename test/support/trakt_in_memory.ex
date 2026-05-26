@@ -73,6 +73,25 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   end
 
   @impl JidoWatch.Trakt.Client
+  def watched_shows(pid, access_token), do: backlog_read(pid, access_token, :watched_shows)
+
+  @impl JidoWatch.Trakt.Client
+  def watched_movies(pid, access_token), do: backlog_read(pid, access_token, :watched_movies)
+
+  @impl JidoWatch.Trakt.Client
+  def stats(pid, access_token), do: backlog_read(pid, access_token, :stats)
+
+  defp backlog_read(pid, access_token, key) do
+    Agent.get(pid, fn state ->
+      cond do
+        MapSet.member?(state.unauthorized_access_tokens, access_token) -> {:error, :unauthorized}
+        state.backlog_error -> {:error, state.backlog_error}
+        true -> {:ok, Map.fetch!(state, key)}
+      end
+    end)
+  end
+
+  @impl JidoWatch.Trakt.Client
   def exchange_refresh_token(pid, refresh_token) do
     Agent.get_and_update(pid, fn state ->
       cond do
