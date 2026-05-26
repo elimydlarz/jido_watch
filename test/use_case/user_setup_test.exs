@@ -115,8 +115,10 @@ defmodule JidoWatch.UseCase.UserSetupTest do
       assert new_state.last_setup_profile.episodes_watched == 42
       assert new_state.last_setup_profile.genre_distribution == %{"drama" => 1, "scifi" => 1}
     end
+  end
 
-    test "if fetching the backlog from Trakt then fails, the user stays connected with the watermark set and no profile is returned" do
+  describe "run/2 when called with a valid code if fetching the backlog from Trakt then fails" do
+    defp connect_with_failing_backlog do
       tokens = %{access_token: "tok-1", refresh_token: "ref-1", expires_in: 7_776_000}
 
       trakt =
@@ -127,11 +129,20 @@ defmodule JidoWatch.UseCase.UserSetupTest do
 
       agent = agent_with(base_plugin_state(trakt))
 
-      {:ok, %{__jido_watch__: new_state}} =
-        UserSetup.run(%{code: "good-code"}, %{agent: agent})
+      {:ok, %{__jido_watch__: new_state}} = UserSetup.run(%{code: "good-code"}, %{agent: agent})
+      {new_state, tokens}
+    end
+
+    test "then the user stays connected with the watermark set" do
+      {new_state, tokens} = connect_with_failing_backlog()
 
       assert new_state.connection == {:connected, tokens}
       assert %DateTime{} = new_state.watermark
+    end
+
+    test "then no viewing profile is returned in the result" do
+      {new_state, _tokens} = connect_with_failing_backlog()
+
       assert new_state.last_setup_profile == nil
     end
   end
