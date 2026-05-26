@@ -225,8 +225,7 @@ Use-case: Persistence (src: lib/jido_watch/plugin.ex; unit: test/use_case/persis
 
 ## Domain
 
-Trees here describe pure functions over the domain types — chunking cues into
-attention windows. No collaborators, no I/O.
+Trees here describe pure functions over the domain types. No collaborators, no I/O.
 
 ### Chunker
 
