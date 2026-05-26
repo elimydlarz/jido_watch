@@ -216,7 +216,7 @@ Use-case: Persistence (src: lib/jido_watch/plugin.ex; unit: test/use_case/persis
     then trakt and subtitles are taken from plugin config, not the checkpoint
     then trakt_client_id, trakt_client_secret, and redirect_uri are taken from plugin config
     then angles and poll_interval_minutes are taken from plugin config
-    then last_setup_url and last_setup_error are nil
+    then last_setup_url, last_setup_error, and last_setup_profile are nil
     when the agent was unconnected before hibernation
       then connection is :unconnected
       then watermark is nil
