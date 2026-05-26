@@ -47,7 +47,7 @@ If you find yourself adding a callback the plugin calls during setup, you're cro
 
 ### How the flows play out
 
-**Setup flow.** User chats with the agent. The agent's LLM, prompted to offer Trakt connection when relevant, decides this is the moment and calls `user_setup`. Tool returns a URL. The LLM weaves it into a reply in its own voice. The user authorizes out of band on Trakt, gets a code, pastes it back. The LLM recognises the code in the user message and calls `user_setup(code: "...")`. Tool exchanges, marks the user connected. LLM confirms in conversation. The plugin now polls.
+**Setup flow.** User chats with the agent. The agent's LLM, prompted to offer Trakt connection when relevant, decides this is the moment and calls `user_setup`. Tool returns a URL. The LLM weaves it into a reply in its own voice. The user authorizes out of band on Trakt, gets a code, pastes it back. The LLM recognises the code in the user message and calls `user_setup(code: "...")`. Tool exchanges, marks the user connected, and hands back a viewing profile of the backlog the LLM can weave into its confirmation. LLM confirms in conversation. The plugin now polls.
 
 **Watching flow.** Trakt poll discovers a new entry past the watermark for a connected user. Plugin fetches subtitles. Plugin slices cues into 10-minute attention windows. For each chunk in order, plugin calls `agent.watch(chunk)` and collects the experience. Once all chunks are processed, plugin calls `agent.experience(experiences, angle)` once per configured angle in parallel and collects the impressions. Plugin calls `agent.form_opinion(impressions)`. Agent composes its message and delivers it.
 
