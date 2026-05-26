@@ -95,20 +95,20 @@ defmodule JidoWatch.Trakt.HTTP do
 
   @impl JidoWatch.Trakt.Client
   def watched_shows(%__MODULE__{} = handle, access_token) do
-    authed_get(handle, "/sync/watched/shows", access_token, extended: "full")
+    authed_get(handle, "/sync/watched/shows", access_token, :list, extended: "full")
   end
 
   @impl JidoWatch.Trakt.Client
   def watched_movies(%__MODULE__{} = handle, access_token) do
-    authed_get(handle, "/sync/watched/movies", access_token, extended: "full")
+    authed_get(handle, "/sync/watched/movies", access_token, :list, extended: "full")
   end
 
   @impl JidoWatch.Trakt.Client
   def stats(%__MODULE__{} = handle, access_token) do
-    authed_get(handle, "/users/me/stats", access_token)
+    authed_get(handle, "/users/me/stats", access_token, :map)
   end
 
-  defp authed_get(handle, path, access_token, params \\ []) do
+  defp authed_get(handle, path, access_token, shape, params \\ []) do
     headers = [
       {"authorization", "Bearer " <> access_token},
       {"trakt-api-version", "2"},
@@ -118,7 +118,10 @@ defmodule JidoWatch.Trakt.HTTP do
     opts = [headers: headers, params: params] ++ req_opts(handle)
 
     case Req.get(handle.base_url <> path, opts) do
-      {:ok, %Req.Response{status: 200, body: body}} ->
+      {:ok, %Req.Response{status: 200, body: body}} when shape == :list and is_list(body) ->
+        {:ok, body}
+
+      {:ok, %Req.Response{status: 200, body: body}} when shape == :map and is_map(body) ->
         {:ok, body}
 
       {:ok, %Req.Response{status: 401}} ->
