@@ -291,4 +291,123 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
       assert {:error, {:trakt_status, 403, ""}} = HTTP.recent_watches(handle, "tok-1")
     end
   end
+
+  describe "watched_shows/2 when given a valid access token" do
+    test "then it GETs /sync/watched/shows with extended=full, bearer auth, trakt-api-version and trakt-api-key headers and returns the parsed list of shows with play counts and genres" do
+      plug = fn conn ->
+        assert conn.method == "GET"
+        assert conn.request_path == "/sync/watched/shows"
+        assert conn.query_string == "extended=full"
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bearer tok-1"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-version") == ["2"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-key") == ["id-abc"]
+
+        shows = [%{"plays" => 12, "show" => %{"title" => "Severance", "genres" => ["drama"]}}]
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(shows))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+
+      assert {:ok, [%{"plays" => 12, "show" => %{"title" => "Severance", "genres" => ["drama"]}}]} =
+               HTTP.watched_shows(handle, "tok-1")
+    end
+  end
+
+  describe "watched_shows/2 if Trakt responds with 401" do
+    test "then the error is :unauthorized" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, :unauthorized} = HTTP.watched_shows(handle, "tok-1")
+    end
+  end
+
+  describe "watched_shows/2 if Trakt responds with another non-200 status" do
+    test "then the error wraps the status and body" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 403, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, {:trakt_status, 403, ""}} = HTTP.watched_shows(handle, "tok-1")
+    end
+  end
+
+  describe "watched_movies/2 when given a valid access token" do
+    test "then it GETs /sync/watched/movies with extended=full, bearer auth, trakt-api-version and trakt-api-key headers and returns the parsed list of movies with play counts and genres" do
+      plug = fn conn ->
+        assert conn.method == "GET"
+        assert conn.request_path == "/sync/watched/movies"
+        assert conn.query_string == "extended=full"
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bearer tok-1"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-version") == ["2"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-key") == ["id-abc"]
+
+        movies = [%{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}]
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(movies))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+
+      assert {:ok, [%{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}]} =
+               HTTP.watched_movies(handle, "tok-1")
+    end
+  end
+
+  describe "watched_movies/2 if Trakt responds with 401" do
+    test "then the error is :unauthorized" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, :unauthorized} = HTTP.watched_movies(handle, "tok-1")
+    end
+  end
+
+  describe "watched_movies/2 if Trakt responds with another non-200 status" do
+    test "then the error wraps the status and body" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 403, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, {:trakt_status, 403, ""}} = HTTP.watched_movies(handle, "tok-1")
+    end
+  end
+
+  describe "stats/2 when given a valid access token" do
+    test "then it GETs /users/me/stats with bearer auth, trakt-api-version and trakt-api-key headers and returns the parsed stats" do
+      plug = fn conn ->
+        assert conn.method == "GET"
+        assert conn.request_path == "/users/me/stats"
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bearer tok-1"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-version") == ["2"]
+        assert Plug.Conn.get_req_header(conn, "trakt-api-key") == ["id-abc"]
+
+        stats = %{"episodes" => %{"watched" => 540}, "ratings" => %{"distribution" => %{"10" => 2}}}
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(stats))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+
+      assert {:ok, %{"episodes" => %{"watched" => 540}, "ratings" => %{"distribution" => %{"10" => 2}}}} =
+               HTTP.stats(handle, "tok-1")
+    end
+  end
+
+  describe "stats/2 if Trakt responds with 401" do
+    test "then the error is :unauthorized" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, :unauthorized} = HTTP.stats(handle, "tok-1")
+    end
+  end
+
+  describe "stats/2 if Trakt responds with another non-200 status" do
+    test "then the error wraps the status and body" do
+      plug = fn conn -> Plug.Conn.send_resp(conn, 403, "") end
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, {:trakt_status, 403, ""}} = HTTP.stats(handle, "tok-1")
+    end
+  end
 end
