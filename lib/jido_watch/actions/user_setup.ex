@@ -26,8 +26,6 @@ defmodule JidoWatch.Actions.UserSetup do
     run_for_params(params, plugin_state)
   end
 
-  alias JidoWatch.ViewingProfile
-
   defp run_for_params(%{code: code}, plugin_state) when is_binary(code) do
     {module, handle} = plugin_state.trakt
 
