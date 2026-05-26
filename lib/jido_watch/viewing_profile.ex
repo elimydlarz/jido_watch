@@ -68,5 +68,4 @@ defmodule JidoWatch.ViewingProfile do
 
   defp title_of(%{"type" => "movie", "movie" => %{"title" => title}}), do: title
   defp title_of(%{"type" => "episode", "show" => %{"title" => title}}), do: title
-  defp title_of(_), do: nil
 end
