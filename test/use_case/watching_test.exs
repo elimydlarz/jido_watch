@@ -217,9 +217,7 @@ defmodule JidoWatch.UseCase.WatchingTest do
       cue = %Cue{start_ms: 0, end_ms: 1_000, text: "x"}
 
       subtitles =
-        SubtitleInMemory.start!(
-          cues: %{"old" => [cue], "newer" => [cue], "newest" => [cue]}
-        )
+        SubtitleInMemory.start!(cues: %{"old" => [cue], "newer" => [cue], "newest" => [cue]})
 
       agent = %Agent{id: "test-agent", state: %{test_pid: self()}}
 

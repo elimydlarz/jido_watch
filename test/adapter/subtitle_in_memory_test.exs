@@ -11,7 +11,10 @@ defmodule JidoWatch.Adapter.SubtitleInMemoryTest do
 
   defp setup_for(:fetch_available) do
     entry = %{"id" => "ep-1"}
-    handle = SubtitleInMemory.start!(cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "a"}]})
+
+    handle =
+      SubtitleInMemory.start!(cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "a"}]})
+
     {SubtitleInMemory, elem(handle, 1), entry}
   end
 

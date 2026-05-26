@@ -136,7 +136,9 @@ defmodule Mix.Tasks.JidoWatch.OperatorSetup do
 
   defp persist!(bearer) do
     case SetupPersistence.write_bearer(bearer) do
-      :ok -> :ok
+      :ok ->
+        :ok
+
       {:error, reason} ->
         Mix.shell().error("Failed to persist bearer: #{inspect(reason)}")
         exit({:shutdown, 1})

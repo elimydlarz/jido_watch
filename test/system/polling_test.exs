@@ -234,7 +234,13 @@ defmodule JidoWatch.System.PollingTest do
   describe "when Trakt returns 401 for a request during a poll and the refresh returns an invalid-grant response" do
     test "then the user becomes unconnected, no further polls fire, and re-running user_setup with a valid code resumes polling" do
       old_tokens = %{access_token: "old-tok", refresh_token: "ref-dead", expires_in: 7_776_000}
-      fresh_tokens = %{access_token: "fresh-tok", refresh_token: "fresh-ref", expires_in: 7_776_000}
+
+      fresh_tokens = %{
+        access_token: "fresh-tok",
+        refresh_token: "fresh-ref",
+        expires_in: 7_776_000
+      }
+
       entry = %{"id" => "ep-1"}
 
       trakt =

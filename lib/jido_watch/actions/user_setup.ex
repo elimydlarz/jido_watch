@@ -11,7 +11,11 @@ defmodule JidoWatch.Actions.UserSetup do
     description:
       "Connect this agent to the user's Trakt account. Call with no arguments to receive a URL the user visits to authorize, then call again with the resulting code.",
     schema: [
-      code: [type: :string, required: false, doc: "Trakt authorization code returned to the user."]
+      code: [
+        type: :string,
+        required: false,
+        doc: "Trakt authorization code returned to the user."
+      ]
     ]
 
   alias JidoWatch.ViewingProfile
@@ -56,7 +60,12 @@ defmodule JidoWatch.Actions.UserSetup do
          {:ok, movies} <- module.watched_movies(handle, access_token),
          {:ok, recent} <- module.recent_watches(handle, access_token),
          {:ok, stats} <- module.stats(handle, access_token) do
-      ViewingProfile.build(%{watched_shows: shows, watched_movies: movies, recent: recent, stats: stats})
+      ViewingProfile.build(%{
+        watched_shows: shows,
+        watched_movies: movies,
+        recent: recent,
+        stats: stats
+      })
     else
       _ -> nil
     end

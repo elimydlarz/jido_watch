@@ -75,7 +75,8 @@ defmodule JidoWatch.MixProject do
         "GitHub" => @source_url,
         "Issues" => "#{@source_url}/issues"
       },
-      files: ~w(lib mix.exs README.md CHANGELOG.md CLAUDE.md MENTAL_MODEL.md VISION.md TEST_TREES.md .formatter.exs)
+      files:
+        ~w(lib mix.exs README.md CHANGELOG.md CLAUDE.md MENTAL_MODEL.md VISION.md TEST_TREES.md .formatter.exs)
     ]
   end
 
@@ -83,7 +84,14 @@ defmodule JidoWatch.MixProject do
     [
       main: "readme",
       source_url: @source_url,
-      extras: ["README.md", "CHANGELOG.md", "VISION.md", "CLAUDE.md", "MENTAL_MODEL.md", "TEST_TREES.md"]
+      extras: [
+        "README.md",
+        "CHANGELOG.md",
+        "VISION.md",
+        "CLAUDE.md",
+        "MENTAL_MODEL.md",
+        "TEST_TREES.md"
+      ]
     ]
   end
 end

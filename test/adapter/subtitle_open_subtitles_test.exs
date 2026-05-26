@@ -210,7 +210,10 @@ defmodule JidoWatch.Adapter.SubtitleOpenSubtitlesTest do
           {"POST", "/api/v1/download"} ->
             conn
             |> Plug.Conn.put_resp_content_type("application/json")
-            |> Plug.Conn.send_resp(200, Jason.encode!(%{"link" => "https://cdn.test/missing.srt"}))
+            |> Plug.Conn.send_resp(
+              200,
+              Jason.encode!(%{"link" => "https://cdn.test/missing.srt"})
+            )
 
           {"GET", "/missing.srt"} ->
             Plug.Conn.send_resp(conn, 404, "")

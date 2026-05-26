@@ -63,7 +63,9 @@ defmodule JidoWatch.UseCase.PersistenceTest do
       {:ok, restored} = thaw()
 
       assert restored.state[:__jido_watch__].trakt == PersistenceHostAgent.trakt_from_config()
-      assert restored.state[:__jido_watch__].subtitles == PersistenceHostAgent.subtitles_from_config()
+
+      assert restored.state[:__jido_watch__].subtitles ==
+               PersistenceHostAgent.subtitles_from_config()
     end
 
     test "then trakt_client_id, trakt_client_secret, and redirect_uri are taken from plugin config" do

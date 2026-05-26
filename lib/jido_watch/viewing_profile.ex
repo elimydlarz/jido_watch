@@ -30,7 +30,8 @@ defmodule JidoWatch.ViewingProfile do
 
   @recently_watched_cap 20
 
-  @spec build(%{watched_shows: [map()], watched_movies: [map()], recent: [map()], stats: map()}) :: t()
+  @spec build(%{watched_shows: [map()], watched_movies: [map()], recent: [map()], stats: map()}) ::
+          t()
   def build(%{watched_shows: shows, watched_movies: movies, recent: recent, stats: stats}) do
     %__MODULE__{
       shows_watched: length(shows),

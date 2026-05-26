@@ -61,14 +61,10 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
       trakt = TraktInMemory.start!(watches: [entry])
 
       subtitles =
-        SubtitleInMemory.start!(
-          cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
-        )
+        SubtitleInMemory.start!(cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]})
 
       agent =
-        agent_with(
-          base_plugin_state(trakt, subtitles, %{connection: {:connected, tokens}})
-        )
+        agent_with(base_plugin_state(trakt, subtitles, %{connection: {:connected, tokens}}))
 
       assert {:ok, %{__jido_watch__: new_state}} = PollWatches.run(%{}, %{agent: agent})
 
@@ -99,14 +95,10 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
         )
 
       subtitles =
-        SubtitleInMemory.start!(
-          cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
-        )
+        SubtitleInMemory.start!(cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]})
 
       agent =
-        agent_with(
-          base_plugin_state(trakt, subtitles, %{connection: {:connected, old_tokens}})
-        )
+        agent_with(base_plugin_state(trakt, subtitles, %{connection: {:connected, old_tokens}}))
 
       %{agent: agent, trakt: trakt, new_tokens: new_tokens}
     end
@@ -153,9 +145,7 @@ defmodule JidoWatch.UseCase.PollWatchesTest do
       subtitles = SubtitleInMemory.start!()
 
       agent =
-        agent_with(
-          base_plugin_state(trakt, subtitles, %{connection: {:connected, old_tokens}})
-        )
+        agent_with(base_plugin_state(trakt, subtitles, %{connection: {:connected, old_tokens}}))
 
       assert {:ok, %{__jido_watch__: new_state}} = PollWatches.run(%{}, %{agent: agent})
 

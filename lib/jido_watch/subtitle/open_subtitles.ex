@@ -19,7 +19,16 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
   alias JidoWatch.SetupPersistence
   alias JidoWatch.Srt
 
-  defstruct [:api_key, :user_agent, :base_url, :bearer_token, :plug, :username, :password, :setup_file]
+  defstruct [
+    :api_key,
+    :user_agent,
+    :base_url,
+    :bearer_token,
+    :plug,
+    :username,
+    :password,
+    :setup_file
+  ]
 
   @default_base_url "https://api.opensubtitles.com/api/v1"
 
@@ -143,7 +152,8 @@ defmodule JidoWatch.Subtitle.OpenSubtitles do
   defp request_download(handle, file_id) do
     url = handle.base_url <> "/download"
 
-    case Req.post(url,
+    case Req.post(
+           url,
            [headers: download_headers(handle), json: %{file_id: file_id}] ++ req_opts(handle)
          ) do
       {:ok, %Req.Response{status: 200, body: %{"link" => link}}} ->

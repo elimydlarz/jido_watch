@@ -79,7 +79,11 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
   end
 
   defp plug_for(scenario)
-       when scenario in [:watched_shows_unauthorized, :watched_movies_unauthorized, :stats_unauthorized] do
+       when scenario in [
+              :watched_shows_unauthorized,
+              :watched_movies_unauthorized,
+              :stats_unauthorized
+            ] do
     fn conn -> Plug.Conn.send_resp(conn, 401, "") end
   end
 
@@ -381,7 +385,10 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
         assert Plug.Conn.get_req_header(conn, "trakt-api-version") == ["2"]
         assert Plug.Conn.get_req_header(conn, "trakt-api-key") == ["id-abc"]
 
-        stats = %{"episodes" => %{"watched" => 540}, "ratings" => %{"distribution" => %{"10" => 2}}}
+        stats = %{
+          "episodes" => %{"watched" => 540},
+          "ratings" => %{"distribution" => %{"10" => 2}}
+        }
 
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
@@ -390,7 +397,8 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
 
       handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
 
-      assert {:ok, %{"episodes" => %{"watched" => 540}, "ratings" => %{"distribution" => %{"10" => 2}}}} =
+      assert {:ok,
+              %{"episodes" => %{"watched" => 540}, "ratings" => %{"distribution" => %{"10" => 2}}}} =
                HTTP.stats(handle, "tok-1")
     end
   end

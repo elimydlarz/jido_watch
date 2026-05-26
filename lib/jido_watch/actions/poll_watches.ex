@@ -76,7 +76,10 @@ defmodule JidoWatch.Actions.PollWatches do
          }) do
       {:ok, %{watermark: wm, pending_watches: pw} = result} ->
         updates = %{watermark: wm, pending_watches: pw}
-        updates = if result[:subtitles], do: Map.put(updates, :subtitles, result.subtitles), else: updates
+
+        updates =
+          if result[:subtitles], do: Map.put(updates, :subtitles, result.subtitles), else: updates
+
         {:ok, updates}
 
       {:error, _} = err ->

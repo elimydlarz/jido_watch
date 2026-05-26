@@ -98,10 +98,23 @@ defmodule JidoWatch.UseCase.UserSetupTest do
       trakt =
         TraktInMemory.start!(
           codes: %{"good-code" => tokens},
-          watched_shows: [%{"plays" => 9, "show" => %{"title" => "Severance", "genres" => ["drama"]}}],
-          watched_movies: [%{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}],
-          watches: [%{"type" => "movie", "watched_at" => "2026-05-18T00:00:00Z", "movie" => %{"title" => "Arrival"}}],
-          stats: %{"episodes" => %{"watched" => 42}, "ratings" => %{"distribution" => %{"10" => 1}}}
+          watched_shows: [
+            %{"plays" => 9, "show" => %{"title" => "Severance", "genres" => ["drama"]}}
+          ],
+          watched_movies: [
+            %{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}
+          ],
+          watches: [
+            %{
+              "type" => "movie",
+              "watched_at" => "2026-05-18T00:00:00Z",
+              "movie" => %{"title" => "Arrival"}
+            }
+          ],
+          stats: %{
+            "episodes" => %{"watched" => 42},
+            "ratings" => %{"distribution" => %{"10" => 1}}
+          }
         )
 
       agent = agent_with(base_plugin_state(trakt))

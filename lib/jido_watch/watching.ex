@@ -36,14 +36,16 @@ defmodule JidoWatch.Watching do
         }
 
   @spec run(map()) :: {:ok, result()} | {:error, term()}
-  def run(%{
-        trakt: {trakt_mod, trakt_handle},
-        subtitles: subtitles,
-        access_token: access_token,
-        host: host,
-        agent: %Agent{} = agent,
-        angles: angles
-      } = opts) do
+  def run(
+        %{
+          trakt: {trakt_mod, trakt_handle},
+          subtitles: subtitles,
+          access_token: access_token,
+          host: host,
+          agent: %Agent{} = agent,
+          angles: angles
+        } = opts
+      ) do
     watermark = Map.get(opts, :watermark)
     pending = Map.get(opts, :pending_watches, [])
 

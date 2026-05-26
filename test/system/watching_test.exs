@@ -190,9 +190,7 @@ defmodule JidoWatch.System.WatchingTest do
       trakt = TraktInMemory.start!(codes: %{"code" => tokens}, watches: [entry])
 
       subtitles =
-        SubtitleInMemory.start!(
-          cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]}
-        )
+        SubtitleInMemory.start!(cues: %{"ep-1" => [%Cue{start_ms: 0, end_ms: 1_000, text: "x"}]})
 
       {:ok, pid} =
         HostAgent.start_link(

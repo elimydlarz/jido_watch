@@ -131,7 +131,9 @@ defmodule JidoWatch.System.JourneyTest do
 
       IO.puts("Re-poll produced no new callbacks. Journey OK.\n")
 
-      IO.puts("Verifying persistence — hibernate, stop, thaw, re-poll should remain idempotent.\n")
+      IO.puts(
+        "Verifying persistence — hibernate, stop, thaw, re-poll should remain idempotent.\n"
+      )
 
       {:ok, server_state} = AgentServer.state(pid)
       pre_hibernate = server_state.agent.state[:__jido_watch__]
@@ -257,7 +259,8 @@ defmodule JidoWatch.System.JourneyTest do
 
   defp entry_past_watermark?(_entry, nil), do: true
 
-  defp entry_past_watermark?(%{"watched_at" => watched_at}, watermark) when is_binary(watched_at) do
+  defp entry_past_watermark?(%{"watched_at" => watched_at}, watermark)
+       when is_binary(watched_at) do
     case DateTime.from_iso8601(watched_at) do
       {:ok, dt, _} -> DateTime.compare(dt, watermark) == :gt
       _ -> true
@@ -301,7 +304,9 @@ defmodule JidoWatch.System.JourneyTest do
   end
 
   defp report_experiences(experiences) do
-    IO.puts("\nexperience/3 was called once per angle (parallel); each got #{experiences |> hd() |> elem(1) |> length()} experience(s):")
+    IO.puts(
+      "\nexperience/3 was called once per angle (parallel); each got #{experiences |> hd() |> elem(1) |> length()} experience(s):"
+    )
 
     Enum.each(experiences, fn {angle, exps} ->
       IO.puts("  #{angle}: #{inspect(Enum.map(exps, & &1.data))}")
@@ -342,5 +347,4 @@ defmodule JidoWatch.System.JourneyTest do
       value -> value
     end
   end
-
 end
