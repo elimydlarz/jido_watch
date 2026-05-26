@@ -24,6 +24,12 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
     - `exchange_refresh_token(handle, "ref-dead")` for `:refresh_invalid_grant`
     - `recent_watches(handle, "tok-good")` for `:recent_watches_valid`
     - `recent_watches(handle, "tok-dead")` for `:recent_watches_unauthorized`
+    - `watched_shows(handle, "tok-good")` for `:watched_shows_valid`
+    - `watched_shows(handle, "tok-dead")` for `:watched_shows_unauthorized`
+    - `watched_movies(handle, "tok-good")` for `:watched_movies_valid`
+    - `watched_movies(handle, "tok-dead")` for `:watched_movies_unauthorized`
+    - `stats(handle, "tok-good")` for `:stats_valid`
+    - `stats(handle, "tok-dead")` for `:stats_unauthorized`
   """
 
   defmacro run do
