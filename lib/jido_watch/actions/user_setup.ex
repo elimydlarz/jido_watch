@@ -14,6 +14,8 @@ defmodule JidoWatch.Actions.UserSetup do
       code: [type: :string, required: false, doc: "Trakt authorization code returned to the user."]
     ]
 
+  alias JidoWatch.ViewingProfile
+
   @impl Jido.Action
   def run(params, %{agent: agent}) do
     plugin_state = Map.fetch!(agent.state, :__jido_watch__)
