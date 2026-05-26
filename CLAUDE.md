@@ -35,7 +35,7 @@ Small and bidirectional.
 
 **Plugin exposes one LLM-callable action the agent uses to drive setup.**
 
-- `user_setup` — called with no args, returns an authorization URL; called with `code: "..."`, exchanges the code for tokens and connects the user. The LLM decides when in the conversation to call it.
+- `user_setup` — called with no args, returns an authorization URL; called with `code: "..."`, exchanges the code for tokens, connects the user, and returns a `%ViewingProfile{}` of their Trakt backlog (facts only — counts, genre tally, play-ranked shows, ratings histogram) as the ephemeral `:last_setup_profile` result field for the LLM to interpret. The LLM decides when in the conversation to call it.
 
 ### The asymmetry
 
