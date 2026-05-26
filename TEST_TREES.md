@@ -299,6 +299,21 @@ Port: Trakt.Client (src: lib/jido_watch/trakt/client.ex; unit: test/adapter/trak
       then returns {:ok, list_of_entries}
     when the access token is rejected by the server
       then returns {:error, :unauthorized}
+  watched_shows/2
+    when the access token is accepted
+      then returns {:ok, list_of_shows_with_play_counts_and_genres}
+    when the access token is rejected by the server
+      then returns {:error, :unauthorized}
+  watched_movies/2
+    when the access token is accepted
+      then returns {:ok, list_of_movies_with_play_counts_and_genres}
+    when the access token is rejected by the server
+      then returns {:error, :unauthorized}
+  stats/2
+    when the access token is accepted
+      then returns {:ok, stats_with_episode_counts_and_ratings_distribution}
+    when the access token is rejected by the server
+      then returns {:error, :unauthorized}
 ```
 
 ## Adapter
