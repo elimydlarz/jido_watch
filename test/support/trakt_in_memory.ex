@@ -16,7 +16,11 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
   def start!(opts \\ []) do
     codes = Keyword.get(opts, :codes, %{})
     watches = Keyword.get(opts, :watches, [])
+    watched_shows = Keyword.get(opts, :watched_shows, [])
+    watched_movies = Keyword.get(opts, :watched_movies, [])
+    stats = Keyword.get(opts, :stats, %{})
     recent_watches_error = Keyword.get(opts, :recent_watches_error)
+    backlog_error = Keyword.get(opts, :backlog_error)
     unauthorized = MapSet.new(Keyword.get(opts, :unauthorized_access_tokens, []))
     refresh_chain = Keyword.get(opts, :refresh_chain, %{})
     exchange_refresh_token_error = Keyword.get(opts, :exchange_refresh_token_error)
@@ -26,7 +30,11 @@ defmodule JidoWatch.Test.Support.TraktInMemory do
         %{
           codes: codes,
           watches: watches,
+          watched_shows: watched_shows,
+          watched_movies: watched_movies,
+          stats: stats,
           recent_watches_error: recent_watches_error,
+          backlog_error: backlog_error,
           recent_watches_calls: 0,
           unauthorized_access_tokens: unauthorized,
           refresh_chain: refresh_chain,
