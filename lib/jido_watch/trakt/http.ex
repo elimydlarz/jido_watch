@@ -93,6 +93,45 @@ defmodule JidoWatch.Trakt.HTTP do
     end
   end
 
+  @impl JidoWatch.Trakt.Client
+  def watched_shows(%__MODULE__{} = handle, access_token) do
+    authed_get(handle, "/sync/watched/shows", access_token, extended: "full")
+  end
+
+  @impl JidoWatch.Trakt.Client
+  def watched_movies(%__MODULE__{} = handle, access_token) do
+    authed_get(handle, "/sync/watched/movies", access_token, extended: "full")
+  end
+
+  @impl JidoWatch.Trakt.Client
+  def stats(%__MODULE__{} = handle, access_token) do
+    authed_get(handle, "/users/me/stats", access_token)
+  end
+
+  defp authed_get(handle, path, access_token, params \\ []) do
+    headers = [
+      {"authorization", "Bearer " <> access_token},
+      {"trakt-api-version", "2"},
+      {"trakt-api-key", handle.client_id}
+    ]
+
+    opts = [headers: headers, params: params] ++ req_opts(handle)
+
+    case Req.get(handle.base_url <> path, opts) do
+      {:ok, %Req.Response{status: 200, body: body}} ->
+        {:ok, body}
+
+      {:ok, %Req.Response{status: 401}} ->
+        {:error, :unauthorized}
+
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:error, {:trakt_status, status, body}}
+
+      {:error, exception} ->
+        {:error, exception}
+    end
+  end
+
   defp parse_tokens(body) do
     %{
       access_token: Map.fetch!(body, "access_token"),
