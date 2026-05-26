@@ -112,6 +112,7 @@ System: user_setup (functional: test/system/user_setup_test.exs)
     then an authorization URL is returned
   when called with a valid auth code for that user
     then the user becomes connected
+    then a viewing profile of the user's pre-connection history is returned to the agent
     then subsequent polling only processes watches recorded after this moment
   when called with an invalid code
     then the user does not become connected
