@@ -50,4 +50,4 @@ The non-obvious choices and what they trade against (single behaviour module rat
 
 ## Temporal View
 
-Lifecycle of a watch from poll to delivered opinion; lifecycle of a user from unconnected to connected via `user_setup`.
+Lifecycle of a watch from poll to delivered opinion; lifecycle of a user from unconnected to connected via `user_setup`, which on connect also returns a one-time viewing profile of the pre-watermark backlog.
