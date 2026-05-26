@@ -52,7 +52,7 @@ defmodule JidoWatch.System.UserSetupTest do
             %{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}
           ],
           watches: [
-            %{"type" => "show", "watched_at" => "2026-05-20T00:00:00Z", "show" => %{"title" => "Severance"}}
+            %{"type" => "episode", "watched_at" => "2026-05-20T00:00:00Z", "show" => %{"title" => "Severance"}}
           ],
           stats: %{
             "episodes" => %{"watched" => 540},
