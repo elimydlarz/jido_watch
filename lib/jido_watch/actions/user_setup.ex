@@ -46,6 +46,11 @@ defmodule JidoWatch.Actions.UserSetup do
     end
   end
 
+  defp run_for_params(_params, plugin_state) do
+    url = authorization_url(plugin_state)
+    {:ok, %{__jido_watch__: Map.put(plugin_state, :last_setup_url, url)}}
+  end
+
   defp build_profile(module, handle, access_token) do
     with {:ok, shows} <- module.watched_shows(handle, access_token),
          {:ok, movies} <- module.watched_movies(handle, access_token),
@@ -55,11 +60,6 @@ defmodule JidoWatch.Actions.UserSetup do
     else
       _ -> nil
     end
-  end
-
-  defp run_for_params(_params, plugin_state) do
-    url = authorization_url(plugin_state)
-    {:ok, %{__jido_watch__: Map.put(plugin_state, :last_setup_url, url)}}
   end
 
   defp authorization_url(%{trakt_client_id: client_id, redirect_uri: redirect_uri}) do
