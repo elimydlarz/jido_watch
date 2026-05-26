@@ -179,6 +179,24 @@ defmodule JidoWatch.System.JourneyTest do
     end
   end
 
+  defp report_profile(profile) do
+    top_genres =
+      profile.genre_distribution
+      |> Enum.sort_by(fn {_genre, count} -> count end, :desc)
+      |> Enum.take(5)
+
+    IO.puts("""
+
+    Viewing profile built from your Trakt backlog at connection time:
+      shows watched:    #{profile.shows_watched}
+      movies watched:   #{profile.movies_watched}
+      episodes watched: #{profile.episodes_watched}
+      top genres:       #{inspect(top_genres)}
+      most watched:     #{inspect(Enum.take(profile.most_watched_shows, 5))}
+      recent:           #{inspect(Enum.take(profile.recently_watched, 5))}
+    """)
+  end
+
   defp diagnose_pipeline(pid, trakt_handle, os_handle) do
     {:ok, access_token} = HostAgent.access_token(pid)
     watermark = HostAgent.watermark(pid)
