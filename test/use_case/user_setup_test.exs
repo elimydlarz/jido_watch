@@ -91,6 +91,49 @@ defmodule JidoWatch.UseCase.UserSetupTest do
       assert %DateTime{} = new_state.watermark
       assert DateTime.compare(new_state.watermark, before) in [:gt, :eq]
     end
+
+    test "then a viewing profile built from the user's Trakt backlog is returned in the result" do
+      tokens = %{access_token: "tok-1", refresh_token: "ref-1", expires_in: 7_776_000}
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{"good-code" => tokens},
+          watched_shows: [%{"plays" => 9, "show" => %{"title" => "Severance", "genres" => ["drama"]}}],
+          watched_movies: [%{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}],
+          watches: [%{"type" => "movie", "watched_at" => "2026-05-18T00:00:00Z", "movie" => %{"title" => "Arrival"}}],
+          stats: %{"episodes" => %{"watched" => 42}, "ratings" => %{"distribution" => %{"10" => 1}}}
+        )
+
+      agent = agent_with(base_plugin_state(trakt))
+
+      {:ok, %{__jido_watch__: new_state}} =
+        UserSetup.run(%{code: "good-code"}, %{agent: agent})
+
+      assert %JidoWatch.ViewingProfile{} = new_state.last_setup_profile
+      assert new_state.last_setup_profile.shows_watched == 1
+      assert new_state.last_setup_profile.movies_watched == 1
+      assert new_state.last_setup_profile.episodes_watched == 42
+      assert new_state.last_setup_profile.genre_distribution == %{"drama" => 1, "scifi" => 1}
+    end
+
+    test "if fetching the backlog from Trakt then fails, the user stays connected with the watermark set and no profile is returned" do
+      tokens = %{access_token: "tok-1", refresh_token: "ref-1", expires_in: 7_776_000}
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{"good-code" => tokens},
+          unauthorized_access_tokens: ["tok-1"]
+        )
+
+      agent = agent_with(base_plugin_state(trakt))
+
+      {:ok, %{__jido_watch__: new_state}} =
+        UserSetup.run(%{code: "good-code"}, %{agent: agent})
+
+      assert new_state.connection == {:connected, tokens}
+      assert %DateTime{} = new_state.watermark
+      assert new_state.last_setup_profile == nil
+    end
   end
 
   describe "run/2 if Trakt rejects the code" do
