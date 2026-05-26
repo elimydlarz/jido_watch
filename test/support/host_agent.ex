@@ -100,6 +100,11 @@ defmodule JidoWatch.Test.Support.HostAgent do
     state.agent.state[:__jido_watch__].watermark
   end
 
+  def viewing_profile(pid) do
+    {:ok, state} = AgentServer.state(pid)
+    state.agent.state[:__jido_watch__].last_setup_profile
+  end
+
   def poll(pid) do
     signal = Signal.new!(%{type: "jido_watch.poll", data: %{}})
 
