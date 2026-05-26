@@ -62,6 +62,27 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
     fn conn -> Plug.Conn.send_resp(conn, 401, "") end
   end
 
+  defp plug_for(scenario) when scenario in [:watched_shows_valid, :watched_movies_valid] do
+    fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(200, Jason.encode!([%{"plays" => 1}]))
+    end
+  end
+
+  defp plug_for(:stats_valid) do
+    fn conn ->
+      conn
+      |> Plug.Conn.put_resp_content_type("application/json")
+      |> Plug.Conn.send_resp(200, Jason.encode!(%{"episodes" => %{"watched" => 1}}))
+    end
+  end
+
+  defp plug_for(scenario)
+       when scenario in [:watched_shows_unauthorized, :watched_movies_unauthorized, :stats_unauthorized] do
+    fn conn -> Plug.Conn.send_resp(conn, 401, "") end
+  end
+
   TraktClientContract.run()
 
   describe "exchange_code/2 when given a valid auth code" do
