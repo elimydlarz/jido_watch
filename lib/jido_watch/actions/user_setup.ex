@@ -24,6 +24,8 @@ defmodule JidoWatch.Actions.UserSetup do
     run_for_params(params, plugin_state)
   end
 
+  alias JidoWatch.ViewingProfile
+
   defp run_for_params(%{code: code}, plugin_state) when is_binary(code) do
     {module, handle} = plugin_state.trakt
 
@@ -34,12 +36,24 @@ defmodule JidoWatch.Actions.UserSetup do
           |> Map.put(:connection, {:connected, tokens})
           |> Map.put(:watermark, DateTime.utc_now())
           |> Map.put(:last_setup_error, nil)
+          |> Map.put(:last_setup_profile, build_profile(module, handle, tokens.access_token))
 
         {:ok, %{__jido_watch__: new_state}}
 
       {:error, reason} ->
         new_state = Map.put(plugin_state, :last_setup_error, reason)
         {:ok, %{__jido_watch__: new_state}}
+    end
+  end
+
+  defp build_profile(module, handle, access_token) do
+    with {:ok, shows} <- module.watched_shows(handle, access_token),
+         {:ok, movies} <- module.watched_movies(handle, access_token),
+         {:ok, recent} <- module.recent_watches(handle, access_token),
+         {:ok, stats} <- module.stats(handle, access_token) do
+      ViewingProfile.build(%{watched_shows: shows, watched_movies: movies, recent: recent, stats: stats})
+    else
+      _ -> nil
     end
   end
 
