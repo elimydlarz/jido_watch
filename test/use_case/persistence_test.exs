@@ -98,11 +98,20 @@ defmodule JidoWatch.UseCase.PersistenceTest do
       assert slice.poll_interval_minutes == PersistenceHostAgent.poll_interval_minutes()
     end
 
-    test "then last_setup_url and last_setup_error are nil" do
+    test "then last_setup_url, last_setup_error, and last_setup_profile are nil" do
       agent =
         build_agent(%{
           last_setup_url: "https://trakt.tv/oauth/authorize?...",
-          last_setup_error: :previous_failure
+          last_setup_error: :previous_failure,
+          last_setup_profile: %JidoWatch.ViewingProfile{
+            shows_watched: 1,
+            movies_watched: 0,
+            episodes_watched: 0,
+            genre_distribution: %{},
+            most_watched_shows: [],
+            recently_watched: [],
+            ratings_distribution: %{}
+          }
         })
 
       :ok = hibernate(agent)
@@ -111,6 +120,7 @@ defmodule JidoWatch.UseCase.PersistenceTest do
       slice = restored.state[:__jido_watch__]
       assert slice.last_setup_url == nil
       assert slice.last_setup_error == nil
+      assert slice.last_setup_profile == nil
     end
 
     test "when the agent was unconnected before hibernation then connection is :unconnected, watermark is nil, pending_watches is empty" do
