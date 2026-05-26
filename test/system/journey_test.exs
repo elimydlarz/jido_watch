@@ -89,6 +89,10 @@ defmodule JidoWatch.System.JourneyTest do
       :ok = HostAgent.complete_user_setup(pid, code)
       assert HostAgent.connected?(pid)
 
+      profile = HostAgent.viewing_profile(pid)
+      assert %JidoWatch.ViewingProfile{} = profile
+      report_profile(profile)
+
       IO.puts("""
 
       Step 2 — Mark a movie or episode as watched on Trakt right now
