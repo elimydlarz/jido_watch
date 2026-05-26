@@ -256,6 +256,32 @@ Domain: Srt (src: lib/jido_watch/srt.ex; unit: test/domain/srt_test.exs)
       then the error wraps the offending block index
 ```
 
+### ViewingProfile
+
+The plugin-owned, factual snapshot of a user's Trakt backlog, built once at
+connection time from the watched lists, recent history, and stats. Facts only —
+counts, genre tallies, play counts, ratings histogram — never an interpretation
+of taste; reading the profile for meaning is the agent's job, not the plugin's.
+
+```
+Domain: ViewingProfile (src: lib/jido_watch/viewing_profile.ex; unit: test/domain/viewing_profile_test.exs)
+  build/1
+    when given watched shows, watched movies, recent history, and stats
+      then shows_watched is the number of watched shows
+      then movies_watched is the number of watched movies
+      then episodes_watched is taken from stats
+      then ratings_distribution is taken from stats
+      then genre_distribution counts each genre across watched shows and movies
+      then most_watched_shows lists shows by play count, highest first
+      then recently_watched preserves the recent history order, newest first
+    when the recent history holds more entries than the recently_watched cap
+      then only the most recent up to the cap are kept
+    when a watched title carries no genres
+      then it adds to the watch counts but contributes nothing to genre_distribution
+    when the watched lists and recent history are empty
+      then a profile with zero counts and empty distributions is built
+```
+
 ## Port
 
 Trees here describe outbound port contracts — what every implementation, in-memory
