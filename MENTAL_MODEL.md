@@ -4,7 +4,7 @@ What this project is and is not, in one sentence — the irreducible essence of 
 
 ## World-to-Code Mapping
 
-How real-world entities (a watch, a transcript chunk, an experience, an impression, an opinion, a user-being-connected) correspond to code structures.
+How real-world entities (a watch, a transcript chunk, an experience, an impression, an opinion, a viewing profile, a user-being-connected) correspond to code structures.
 
 ## Ubiquitous Language
 
