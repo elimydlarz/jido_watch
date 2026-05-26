@@ -186,6 +186,10 @@ Use-case: User_setup (src: lib/jido_watch/actions/user_setup.ex; unit: test/use_
       then connection becomes {:connected, tokens} from Trakt
       then last_setup_error is cleared
       then the watermark is set to a DateTime no earlier than the moment of exchange
+      then a viewing profile built from the user's Trakt backlog is returned in the result
+      if fetching the backlog from Trakt then fails
+        then the user stays connected with the watermark set
+        then no viewing profile is returned in the result
     if Trakt rejects the code
       then connection stays :unconnected
       then last_setup_error is set to the reason Trakt returned
