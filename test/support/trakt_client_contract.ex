@@ -76,6 +76,51 @@ defmodule JidoWatch.Test.Support.TraktClientContract do
           assert {:error, :unauthorized} = mod.recent_watches(handle, "tok-dead")
         end
       end
+
+      describe "watched_shows/2 when the access token is accepted" do
+        test "then returns {:ok, list_of_shows_with_play_counts_and_genres}" do
+          {mod, handle} = setup_for(:watched_shows_valid)
+          assert {:ok, shows} = mod.watched_shows(handle, "tok-good")
+          assert is_list(shows)
+        end
+      end
+
+      describe "watched_shows/2 when the access token is rejected by the server" do
+        test "then returns {:error, :unauthorized}" do
+          {mod, handle} = setup_for(:watched_shows_unauthorized)
+          assert {:error, :unauthorized} = mod.watched_shows(handle, "tok-dead")
+        end
+      end
+
+      describe "watched_movies/2 when the access token is accepted" do
+        test "then returns {:ok, list_of_movies_with_play_counts_and_genres}" do
+          {mod, handle} = setup_for(:watched_movies_valid)
+          assert {:ok, movies} = mod.watched_movies(handle, "tok-good")
+          assert is_list(movies)
+        end
+      end
+
+      describe "watched_movies/2 when the access token is rejected by the server" do
+        test "then returns {:error, :unauthorized}" do
+          {mod, handle} = setup_for(:watched_movies_unauthorized)
+          assert {:error, :unauthorized} = mod.watched_movies(handle, "tok-dead")
+        end
+      end
+
+      describe "stats/2 when the access token is accepted" do
+        test "then returns {:ok, stats_with_episode_counts_and_ratings_distribution}" do
+          {mod, handle} = setup_for(:stats_valid)
+          assert {:ok, stats} = mod.stats(handle, "tok-good")
+          assert is_map(stats)
+        end
+      end
+
+      describe "stats/2 when the access token is rejected by the server" do
+        test "then returns {:error, :unauthorized}" do
+          {mod, handle} = setup_for(:stats_unauthorized)
+          assert {:error, :unauthorized} = mod.stats(handle, "tok-dead")
+        end
+      end
     end
   end
 end
