@@ -99,6 +99,18 @@ The action is registered with Jido under the signal type
 `jido_watch.user_setup`. Wire it into your agent's tool surface so
 the LLM can call it directly.
 
+On a successful code exchange the plugin also builds a **viewing profile**
+of the user's Trakt backlog and returns it as `:last_setup_profile` in the
+plugin-state slice — read it from
+`agent.state[:__jido_watch__].last_setup_profile` after the call. A
+`%JidoWatch.ViewingProfile{}` carries facts only — `shows_watched`,
+`movies_watched`, `episodes_watched`, `genre_distribution`,
+`most_watched_shows`, `recently_watched`, `ratings_distribution` — for the
+LLM to interpret in its own voice; the plugin never characterizes taste. The
+profile is best-effort: if the backlog fetch fails the user still connects and
+the field is `nil`. It is connect-time only and not persisted across
+hibernate/thaw.
+
 ## Configuration
 
 Pass Trakt and subtitle wiring through plugin config at the `use Jido.Agent`
