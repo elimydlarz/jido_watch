@@ -94,6 +94,7 @@ defmodule JidoWatch.Plugin do
       pending_watches: [],
       last_setup_url: nil,
       last_setup_error: nil,
+      last_setup_profile: nil,
       poll_interval_minutes: Map.get(config, :poll_interval_minutes)
     }
   end
