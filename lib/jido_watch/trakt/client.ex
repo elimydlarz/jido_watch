@@ -23,4 +23,13 @@ defmodule JidoWatch.Trakt.Client do
 
   @callback recent_watches(handle(), access_token :: binary()) ::
               {:ok, [map()]} | {:error, :unauthorized} | {:error, term()}
+
+  @callback watched_shows(handle(), access_token :: binary()) ::
+              {:ok, [map()]} | {:error, :unauthorized} | {:error, term()}
+
+  @callback watched_movies(handle(), access_token :: binary()) ::
+              {:ok, [map()]} | {:error, :unauthorized} | {:error, term()}
+
+  @callback stats(handle(), access_token :: binary()) ::
+              {:ok, map()} | {:error, :unauthorized} | {:error, term()}
 end
