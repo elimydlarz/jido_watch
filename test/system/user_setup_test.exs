@@ -38,6 +38,47 @@ defmodule JidoWatch.System.UserSetupTest do
       assert HostAgent.connected?(pid)
     end
 
+    test "then a viewing profile of the user's pre-connection history is returned to the agent" do
+      tokens = %{access_token: "tok-abc", refresh_token: "ref-abc", expires_in: 7_776_000}
+
+      trakt =
+        TraktInMemory.start!(
+          codes: %{"good-code" => tokens},
+          watched_shows: [
+            %{"plays" => 12, "show" => %{"title" => "Severance", "genres" => ["drama", "scifi"]}},
+            %{"plays" => 3, "show" => %{"title" => "The Bear", "genres" => ["drama", "comedy"]}}
+          ],
+          watched_movies: [
+            %{"plays" => 1, "movie" => %{"title" => "Arrival", "genres" => ["scifi"]}}
+          ],
+          watches: [
+            %{"type" => "show", "watched_at" => "2026-05-20T00:00:00Z", "show" => %{"title" => "Severance"}}
+          ],
+          stats: %{
+            "episodes" => %{"watched" => 540},
+            "ratings" => %{"distribution" => %{"9" => 4, "10" => 2}}
+          }
+        )
+
+      {:ok, pid} =
+        HostAgent.start_link(
+          trakt: trakt,
+          trakt_client_id: "client-abc",
+          trakt_client_secret: "secret-abc"
+        )
+
+      :ok = HostAgent.complete_user_setup(pid, "good-code")
+
+      profile = HostAgent.viewing_profile(pid)
+      assert profile.shows_watched == 2
+      assert profile.movies_watched == 1
+      assert profile.episodes_watched == 540
+      assert profile.genre_distribution["drama"] == 2
+      assert profile.genre_distribution["scifi"] == 2
+      assert [%{title: "Severance", plays: 12} | _] = profile.most_watched_shows
+      assert profile.ratings_distribution == %{"9" => 4, "10" => 2}
+    end
+
     test "then subsequent polling only processes watches recorded after this moment" do
       tokens = %{access_token: "tok-abc", refresh_token: "ref-abc", expires_in: 7_776_000}
 
