@@ -86,6 +86,7 @@ System: journey (functional: test/system/journey_test.exs)
     then an authorization URL is returned
       when the user authorizes on Trakt and submits the resulting code through user_setup
         then the agent becomes connected
+        then a viewing profile of the user's Trakt backlog is returned
           when the agent polls Trakt for the connected user
             when there are new entries past the watermark
               when the most recent entry's subtitles can be fetched from OpenSubtitles
