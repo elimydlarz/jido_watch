@@ -399,6 +399,8 @@ Adapter: Trakt.HTTP (src: lib/jido_watch/trakt/http.ex; integration: test/adapte
     when given a valid access token
       then it GETs /sync/history with bearer auth, trakt-api-version and trakt-api-key headers
         and returns the parsed list of entries
+    when Trakt returns a representative /sync/history payload
+      then each entry preserves type, watched_at, and the matching movie or episode+show object with title and imdb id
     if Trakt responds with 401
       then the error is :unauthorized
     if Trakt responds 200 with a body that is not a list
