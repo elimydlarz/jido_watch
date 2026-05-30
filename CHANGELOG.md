@@ -3,6 +3,34 @@
 All notable changes to `:jido_watch` are recorded here. Each entry covers what
 shipped to Hex under that version.
 
+## 1.1.0 — 2026-05-30
+
+### Behaviour and plugin
+- `user_setup(code: "...")` now returns a `%JidoWatch.ViewingProfile{}` of the
+  user's Trakt backlog as the ephemeral `:last_setup_profile` result field —
+  facts only (watched-show/movie counts, genre tally, play-ranked shows, recent
+  history, ratings histogram), built once at connection time. The agent reads it
+  for taste; the plugin makes no judgments. Lets the agent open with what the
+  user has actually been watching.
+- `user_setup` accepts a ReAct-style context shape, so agents driving it through
+  a ReAct tool loop no longer have to reshape the call.
+
+### Configuration
+- Adapters can now be supplied as **primitives** instead of pre-built
+  `{module, handle}` tuples: `trakt_adapter` + `trakt_client_id` +
+  `trakt_client_secret`, and `subtitle_adapter` + `opensubtitles_api_key` +
+  `opensubtitles_user_agent` (+ optional `username`/`password`). The plugin
+  constructs the handles at mount time, so consuming apps avoid compile-time
+  module loading. The pre-built tuple form still works (used by tests).
+- When the subtitle adapter is `JidoWatch.Subtitle.OpenSubtitles`, the plugin
+  reads a pre-authenticated bearer token from the operator setup file and the
+  adapter re-logs-in on 401.
+
+### Operator tooling
+- `mix jido_watch.operator_setup` — one-time operator task that validates Trakt
+  and OpenSubtitles credentials and persists an OpenSubtitles bearer token
+  (`JidoWatch.SetupPersistence`) for the plugin to pick up at mount.
+
 ## 1.0.0 — 2026-05-22
 
 Initial public release on Hex (`susu` organisation).
