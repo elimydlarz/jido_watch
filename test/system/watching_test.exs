@@ -11,7 +11,7 @@ defmodule JidoWatch.System.WatchingTest do
   describe "when the user watches new content" do
     test "then the agent's watch/2 is called once per chunk" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
@@ -48,7 +48,7 @@ defmodule JidoWatch.System.WatchingTest do
 
     test "then the agent's experience/3 is called once per angle, with the experiences from watch" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
@@ -90,7 +90,7 @@ defmodule JidoWatch.System.WatchingTest do
 
     test "then the agent's form_opinion/2 is called once with the impressions from each angle" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
@@ -152,7 +152,7 @@ defmodule JidoWatch.System.WatchingTest do
   describe "when content the user watched cannot be processed" do
     test "then form_opinion/2 is not called" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "no-subs"}
+      entry = %{"id" => "no-subs", "type" => "movie", "movie" => %{"title" => "Unknown"}}
 
       trakt = TraktInMemory.start!(codes: %{"code" => tokens}, watches: [entry])
       subtitles = SubtitleInMemory.start!(cues: %{})

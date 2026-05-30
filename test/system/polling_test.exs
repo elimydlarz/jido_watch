@@ -32,7 +32,7 @@ defmodule JidoWatch.System.PollingTest do
   describe "when the plugin is mounted with no user connected and the user becomes connected via user_setup" do
     test "then polls begin firing on the configured interval" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
@@ -92,7 +92,7 @@ defmodule JidoWatch.System.PollingTest do
   describe "when the plugin is mounted with the user already connected" do
     test "then polls begin firing on the configured interval" do
       tokens = %{access_token: "tok", refresh_token: "ref", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt = TraktInMemory.start!(codes: %{}, watches: [entry])
 
@@ -193,7 +193,7 @@ defmodule JidoWatch.System.PollingTest do
     test "then the new tokens replace the stored pair, the original request is retried with the new access token, and the tick proceeds normally from there" do
       old_tokens = %{access_token: "old-tok", refresh_token: "ref-1", expires_in: 7_776_000}
       new_tokens = %{access_token: "new-tok", refresh_token: "ref-2", expires_in: 7_776_000}
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
@@ -241,7 +241,7 @@ defmodule JidoWatch.System.PollingTest do
         expires_in: 7_776_000
       }
 
-      entry = %{"id" => "ep-1"}
+      entry = %{"id" => "ep-1", "type" => "movie", "movie" => %{"title" => "Arrival"}}
 
       trakt =
         TraktInMemory.start!(
