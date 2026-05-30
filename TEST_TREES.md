@@ -411,6 +411,8 @@ Adapter: Trakt.HTTP (src: lib/jido_watch/trakt/http.ex; integration: test/adapte
     when given a valid access token
       then it GETs /sync/watched/shows with extended=full, bearer auth, trakt-api-version and trakt-api-key headers
         and returns the parsed list of shows with play counts and genres
+    when Trakt returns a representative /sync/watched/shows payload with extended=full
+      then each entry preserves plays and the show object's title and genres
     if Trakt responds with 401
       then the error is :unauthorized
     if Trakt responds 200 with a body that is not a list
