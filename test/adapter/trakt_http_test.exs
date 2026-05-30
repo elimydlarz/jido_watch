@@ -470,4 +470,252 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
       assert {:error, {:trakt_status, 403, ""}} = HTTP.stats(handle, "tok-1")
     end
   end
+
+  # ── Trakt response-shape contract tests ─────────────────────────────────
+  #
+  # Each test below stubs the adapter with a realistic Trakt response payload
+  # (captured from https://trakt.docs.apiary.io) and asserts the keys the
+  # rest of the codebase actually reads. These fixtures are the contract
+  # documentation for "what does Trakt return" — a contributor can read the
+  # maps below to learn the wire format.
+
+  describe "recent_watches/2 when Trakt returns a representative /sync/history payload" do
+    test "then each entry preserves type, watched_at, and the matching movie or episode+show object with title and imdb id" do
+      movie_entry = %{
+        "id" => 3_482_351_236,
+        "watched_at" => "2026-05-20T18:12:09.000Z",
+        "action" => "scrobble",
+        "type" => "movie",
+        "movie" => %{
+          "title" => "Arrival",
+          "year" => 2016,
+          "ids" => %{
+            "trakt" => 264_424,
+            "slug" => "arrival-2016",
+            "imdb" => "tt2543164",
+            "tmdb" => 329_865
+          }
+        }
+      }
+
+      episode_entry = %{
+        "id" => 3_482_359_802,
+        "watched_at" => "2026-05-21T20:30:01.000Z",
+        "action" => "scrobble",
+        "type" => "episode",
+        "episode" => %{
+          "season" => 1,
+          "number" => 9,
+          "title" => "The We We Are",
+          "ids" => %{
+            "trakt" => 4_055_309,
+            "tvdb" => 8_550_354,
+            "imdb" => "tt14288696",
+            "tmdb" => 2_198_158
+          }
+        },
+        "show" => %{
+          "title" => "Severance",
+          "year" => 2022,
+          "ids" => %{
+            "trakt" => 156_869,
+            "slug" => "severance",
+            "tvdb" => 371_980,
+            "imdb" => "tt11280740",
+            "tmdb" => 95_396,
+            "tvrage" => nil
+          }
+        }
+      }
+
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!([movie_entry, episode_entry]))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      {:ok, [movie, episode]} = HTTP.recent_watches(handle, "tok-1")
+
+      assert movie["type"] == "movie"
+      assert movie["watched_at"] == "2026-05-20T18:12:09.000Z"
+      assert movie["movie"]["title"] == "Arrival"
+      assert movie["movie"]["ids"]["imdb"] == "tt2543164"
+
+      assert episode["type"] == "episode"
+      assert episode["watched_at"] == "2026-05-21T20:30:01.000Z"
+      assert episode["episode"]["title"] == "The We We Are"
+      assert episode["episode"]["ids"]["imdb"] == "tt14288696"
+      assert episode["show"]["title"] == "Severance"
+    end
+  end
+
+  describe "watched_shows/2 when Trakt returns a representative /sync/watched/shows payload with extended=full" do
+    test "then each entry preserves plays and the show object's title and genres" do
+      entry = %{
+        "plays" => 19,
+        "last_watched_at" => "2026-05-21T20:30:01.000Z",
+        "last_updated_at" => "2026-05-21T20:30:01.000Z",
+        "reset_at" => nil,
+        "show" => %{
+          "title" => "Severance",
+          "year" => 2022,
+          "ids" => %{
+            "trakt" => 156_869,
+            "slug" => "severance",
+            "tvdb" => 371_980,
+            "imdb" => "tt11280740",
+            "tmdb" => 95_396,
+            "tvrage" => nil
+          },
+          "overview" => "Mark leads a team of office workers whose memories have been surgically divided.",
+          "first_aired" => "2022-02-18T08:00:00.000Z",
+          "runtime" => 60,
+          "certification" => "TV-MA",
+          "network" => "Apple TV+",
+          "country" => "us",
+          "status" => "returning series",
+          "rating" => 8.49,
+          "votes" => 25_000,
+          "language" => "en",
+          "languages" => ["en"],
+          "available_translations" => ["en", "es"],
+          "genres" => ["drama", "mystery", "science-fiction", "thriller"],
+          "aired_episodes" => 19
+        },
+        "seasons" => [
+          %{
+            "number" => 1,
+            "episodes" => [
+              %{"number" => 1, "plays" => 1, "last_watched_at" => "2022-02-18T20:00:00.000Z"}
+            ]
+          }
+        ]
+      }
+
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!([entry]))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      {:ok, [parsed]} = HTTP.watched_shows(handle, "tok-1")
+
+      assert parsed["plays"] == 19
+      assert parsed["show"]["title"] == "Severance"
+      assert parsed["show"]["genres"] == ["drama", "mystery", "science-fiction", "thriller"]
+    end
+  end
+
+  describe "watched_movies/2 when Trakt returns a representative /sync/watched/movies payload with extended=full" do
+    test "then each entry preserves plays and the movie object's title and genres" do
+      entry = %{
+        "plays" => 1,
+        "last_watched_at" => "2026-05-20T18:12:09.000Z",
+        "last_updated_at" => "2026-05-20T18:12:09.000Z",
+        "movie" => %{
+          "title" => "Arrival",
+          "year" => 2016,
+          "ids" => %{
+            "trakt" => 264_424,
+            "slug" => "arrival-2016",
+            "imdb" => "tt2543164",
+            "tmdb" => 329_865
+          },
+          "tagline" => "Why are they here?",
+          "overview" => "Taking place after alien crafts land around the world, an expert linguist is recruited.",
+          "released" => "2016-11-11",
+          "runtime" => 116,
+          "country" => "us",
+          "status" => "released",
+          "rating" => 7.92,
+          "votes" => 15_000,
+          "language" => "en",
+          "languages" => ["en"],
+          "available_translations" => ["en", "es"],
+          "genres" => ["science-fiction", "drama", "mystery"],
+          "certification" => "PG-13"
+        }
+      }
+
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!([entry]))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      {:ok, [parsed]} = HTTP.watched_movies(handle, "tok-1")
+
+      assert parsed["plays"] == 1
+      assert parsed["movie"]["title"] == "Arrival"
+      assert parsed["movie"]["genres"] == ["science-fiction", "drama", "mystery"]
+    end
+  end
+
+  describe "stats/2 when Trakt returns a representative /users/me/stats payload" do
+    test "then it preserves episodes.watched and ratings.distribution" do
+      stats = %{
+        "movies" => %{
+          "plays" => 155,
+          "watched" => 114,
+          "minutes" => 16_273,
+          "collected" => 110,
+          "ratings" => 110,
+          "comments" => 5
+        },
+        "shows" => %{"watched" => 24, "collected" => 24, "ratings" => 0, "comments" => 0},
+        "seasons" => %{"ratings" => 0, "comments" => 0},
+        "episodes" => %{
+          "plays" => 552,
+          "watched" => 534,
+          "minutes" => 17_330,
+          "collected" => 175,
+          "ratings" => 64,
+          "comments" => 4
+        },
+        "network" => %{"friends" => 1, "followers" => 4, "following" => 4},
+        "ratings" => %{
+          "total" => 174,
+          "distribution" => %{
+            "1" => 1,
+            "2" => 0,
+            "3" => 0,
+            "4" => 1,
+            "5" => 7,
+            "6" => 15,
+            "7" => 39,
+            "8" => 65,
+            "9" => 26,
+            "10" => 20
+          }
+        }
+      }
+
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(stats))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      {:ok, parsed} = HTTP.stats(handle, "tok-1")
+
+      assert parsed["episodes"]["watched"] == 534
+
+      assert parsed["ratings"]["distribution"] == %{
+               "1" => 1,
+               "2" => 0,
+               "3" => 0,
+               "4" => 1,
+               "5" => 7,
+               "6" => 15,
+               "7" => 39,
+               "8" => 65,
+               "9" => 26,
+               "10" => 20
+             }
+    end
+  end
 end
