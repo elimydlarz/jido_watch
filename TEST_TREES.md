@@ -435,6 +435,8 @@ Adapter: Trakt.HTTP (src: lib/jido_watch/trakt/http.ex; integration: test/adapte
     when given a valid access token
       then it GETs /users/me/stats with bearer auth, trakt-api-version and trakt-api-key headers
         and returns the parsed stats
+    when Trakt returns a representative /users/me/stats payload
+      then it preserves episodes.watched and ratings.distribution
     if Trakt responds with 401
       then the error is :unauthorized
     if Trakt responds 200 with a body that is not a map
