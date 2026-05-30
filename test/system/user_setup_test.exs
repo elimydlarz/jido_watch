@@ -90,7 +90,7 @@ defmodule JidoWatch.System.UserSetupTest do
         "id" => "old",
         "type" => "movie",
         "watched_at" => "2020-01-01T00:00:00Z",
-        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+        "movie" => %{"title" => "Old Movie", "ids" => %{"imdb" => "tt0"}}
       }
 
       trakt =
