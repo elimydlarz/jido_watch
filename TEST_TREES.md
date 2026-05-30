@@ -401,6 +401,8 @@ Adapter: Trakt.HTTP (src: lib/jido_watch/trakt/http.ex; integration: test/adapte
         and returns the parsed list of entries
     if Trakt responds with 401
       then the error is :unauthorized
+    if Trakt responds 200 with a body that is not a list
+      then the error wraps the status and body
     if Trakt responds with another non-200 status
       then the error wraps the status and body
   watched_shows/2
