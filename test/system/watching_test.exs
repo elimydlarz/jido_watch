@@ -184,7 +184,7 @@ defmodule JidoWatch.System.WatchingTest do
         "id" => "ep-1",
         "type" => "movie",
         "watched_at" => future_watched_at,
-        "movie" => %{"ids" => %{"imdb" => "tt0"}}
+        "movie" => %{"title" => "Arrival", "ids" => %{"imdb" => "tt0"}}
       }
 
       trakt = TraktInMemory.start!(codes: %{"code" => tokens}, watches: [entry])
