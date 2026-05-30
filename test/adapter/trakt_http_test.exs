@@ -277,6 +277,19 @@ defmodule JidoWatch.Adapter.TraktHTTPTest do
     end
   end
 
+  describe "recent_watches/2 if Trakt responds 200 with a body that is not a list" do
+    test "then the error wraps the status and body" do
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(%{"error" => "unexpected"}))
+      end
+
+      handle = HTTP.new(client_id: "id-abc", client_secret: "secret-xyz", plug: plug)
+      assert {:error, {:trakt_status, 200, %{"error" => "unexpected"}}} = HTTP.recent_watches(handle, "tok-1")
+    end
+  end
+
   describe "recent_watches/2 if Trakt responds with another non-200 status" do
     test "then the error wraps the status and body" do
       plug = fn conn ->
